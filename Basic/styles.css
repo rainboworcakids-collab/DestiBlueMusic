@@ -1,0 +1,728 @@
+/* styles.css - v3.0 (ปรับปรุงใหม่ สำหรับ DestiBlue Music) */
+/* ============================================================ */
+
+:root {
+    /* สีหลัก */
+    --primary-50: #f5f3ff;
+    --primary-100: #ede9fe;
+    --primary-200: #ddd6fe;
+    --primary-300: #c4b5fd;
+    --primary-400: #a78bfa;
+    --primary-500: #8b5cf6;
+    --primary-600: #7c3aed;
+    --primary-700: #6d28d9;
+    --primary-800: #5b21b6;
+    --primary-900: #4c1d95;
+    
+    /* สีรอง */
+    --secondary-400: #38bdf8;
+    --secondary-500: #0ea5e9;
+    --secondary-600: #0284c7;
+    
+    /* สีพื้นหลัง */
+    --bg-dark: #0f172a;
+    --bg-glass: rgba(30, 30, 40, 0.6);
+    --bg-card: rgba(255, 255, 255, 0.03);
+    
+    /* สีข้อความ */
+    --text-white: #ffffff;
+    --text-slate-300: #cbd5e1;
+    --text-slate-400: #94a3b8;
+    --text-indigo-300: #a5b4fc;
+    --text-purple-300: #d8b4fe;
+    --text-yellow-300: #fde047;
+    --text-green-300: #86efac;
+    
+    /* เงา */
+    --shadow-lg: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.5);
+    
+    /* ขนาด */
+    --radius-lg: 2rem;
+    --radius-md: 1.5rem;
+    --radius-sm: 1rem;
+}
+
+/* ===== Base ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b, #312e81);
+    color: var(--text-white);
+    font-family: 'Sarabun', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Kanit', sans-serif;
+}
+
+/* ===== Utility ===== */
+.hidden {
+    display: none !important;
+}
+
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ===== Loading Screen ===== */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #0f172a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-screen .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(79, 70, 229, 0.3);
+    border-radius: 50%;
+    border-top-color: #4f46e5;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== Glass Card ===== */
+.glass-card {
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-lg);
+    padding: 2rem;
+}
+
+.app-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a5b4fc, #d8b4fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.user-info {
+    color: var(--text-slate-300);
+    font-size: 0.9rem;
+}
+
+/* ===== Clock ===== */
+.clock-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.clock-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(70px);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    width: 120px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.clock-number {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    color: white;
+}
+
+.clock-label {
+    font-size: 0.8rem;
+    color: var(--text-slate-400);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.am-pm-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fbbf24;
+    margin-left: 0.5rem;
+}
+
+/* ===== Play Button ===== */
+.play-button-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #10b981, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    box-shadow: var(--shadow-glow);
+    transition: all 0.2s;
+    margin: 0 auto;
+    border: none;
+    cursor: pointer;
+}
+
+.play-button-large:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+}
+
+/* ===== Button Grid ===== */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-action {
+    background: linear-gradient(145deg, #2d3748, #1a202c);
+    border: none;
+    border-radius: 1rem;
+    padding: 0.75rem 1rem;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(145deg, #374151, #1f2937);
+}
+
+.btn-action i {
+    font-size: 1rem;
+}
+
+/* ===== Volume Control ===== */
+.volume-control {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin: 1.5rem auto;
+    max-width: 300px;
+    text-align: center;
+}
+
+.volume-control label {
+    color: var(--text-slate-300);
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.volume-slider {
+    width: 100%;
+    height: 6px;
+    background: #334155;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #8b5cf6;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px #8b5cf6;
+}
+
+.volume-values {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-slate-400);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* ===== Info Panel ===== */
+.info-panel {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+    border-radius: 2rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.song-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-indigo-300);
+}
+
+.song-info {
+    font-size: 0.9rem;
+    color: var(--text-slate-400);
+    margin-top: 0.25rem;
+}
+
+.melody-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.number-details {
+    font-size: 0.9rem;
+    color: var(--text-slate-300);
+}
+
+.seed-numbers {
+    font-family: monospace;
+    color: var(--text-indigo-300);
+}
+
+/* ===== Settings Panel ===== */
+.settings-panel {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-label {
+    font-size: 0.9rem;
+    color: var(--text-slate-400);
+}
+
+.settings-badge {
+    font-size: 0.7rem;
+    background: rgba(79, 70, 229, 0.3);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+}
+
+@media (min-width: 768px) {
+    .settings-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ===== Support Section ===== */
+.support-section {
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+    color: white;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.edition-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #fbbf24, #d97706);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+}
+
+.support-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.support-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-support {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-donate {
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+}
+
+.btn-donate:hover {
+    background: #ef4444;
+}
+
+.btn-premium {
+    background: rgba(245, 158, 11, 0.8);
+    color: white;
+}
+
+.btn-premium:hover {
+    background: #f59e0b;
+}
+
+.btn-info {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.btn-info:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.storage-status {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* ===== Modal Styles ===== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.modal-overlay:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: white;
+    color: #1f2937;
+    border-radius: 1rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #6b7280;
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+}
+
+.modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ===== Form Elements (Modal) ===== */
+.option-group {
+    margin-bottom: 1.5rem;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+}
+
+.option-radio {
+    margin-right: 0.75rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: #8b5cf6;
+}
+
+.option-card {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.option-card.active {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: #8b5cf6;
+}
+
+.option-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.25rem;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #1e40af;
+    font-size: 0.875rem;
+}
+
+/* ===== Premium Modal ===== */
+.premium-card {
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    border: 1px solid #fcd34d;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+}
+
+.premium-list {
+    list-style: none;
+    padding: 0;
+}
+
+.premium-list li {
+    margin-bottom: 0.5rem;
+    color: #92400e;
+}
+
+/* ===== Loading Overlay ===== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+/* ===== Toast ===== */
+.toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #10b981;
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1002;
+    animation: slideIn 0.3s ease;
+}
+
+.toast.error {
+    background: #ef4444;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+    .clock-card {
+        width: 100px;
+        height: 120px;
+    }
+    .clock-number {
+        font-size: 3rem;
+    }
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .app-title {
+        font-size: 1.2rem;
+    }
+    .modal-content {
+        width: 95%;
+    }
+}
