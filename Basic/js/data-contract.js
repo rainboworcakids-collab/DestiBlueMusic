@@ -683,9 +683,10 @@ if (typeof window !== 'undefined') {
   // ===== DataContractConstants =====
   window.DataContractConstants = {
       ELEMENT_MAP_TH_TO_EN: {
-        'ไม้': 'wood', 'ไฟ': 'fire', 'ดิน': 'earth', 'โลหะ': 'metal', 'น้ำ': 'water',
+        'ไม้': 'wood', 'ไฟ': 'fire', 'ดิน': 'earth', 'ทอง': 'metal', 'โลหะ': 'metal', 'น้ำ': 'water',
         'wood': 'wood', 'fire': 'fire', 'earth': 'earth', 'metal': 'metal', 'water': 'water'
       },
+
      ELEMENT_CAPITALIZE: {
         'wood': 'Wood', 'fire': 'Fire', 'earth': 'Earth', 'metal': 'Metal', 'water': 'Water'
       },
