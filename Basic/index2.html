@@ -220,16 +220,16 @@
         <form id="musicForm" class="form">
             <!-- ชื่อ-สกุล (ชื่อเล่น) -->
             <div id="fullNameContainer" class="form-group" data-options="FullName,BD-IDC-FullName">
-                        <label for="fullName" class="form-label">
-                            <i class="fas fa-user mr-1"></i> ชื่อเล่น <span class="text-red-500">*</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="fullName" 
-                            class="form-input"
-                            placeholder="เช่น ชัย"
-                            maxlength="20"
-                        >
+                <label for="fullName" class="form-label">
+                    <i class="fas fa-user mr-1"></i> ชื่อเล่น <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    id="fullName" 
+                    class="form-input"
+                    placeholder="เช่น ชัย"
+                    maxlength="20"
+                >
             </div>
                     
             <!-- บัตรประชาชน -->
@@ -426,6 +426,7 @@
         const musicPreviewId = `musicPreviewBtn_${Date.now()}`;
         const musicUrl = getMusicPreviewUrl(lifePath);
         
+        /*
         const html = `
             <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
                 <div id="playButtonAnchor" style="position: absolute; top: 1rem; right: 1rem; z-index: 10;"></div>
@@ -437,6 +438,33 @@
                             <span class="lifepath-badge text-white px-4 py-1 rounded-full text-sm font-mono shadow-md"><i class="fa-regular fa-star mr-1"></i> Life Path ${lifePath}</span>
                         </div>
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-star text-amber-500"></i> จุดแข็งทางธรรมชาติ</p>
+                        <ul class="space-y-1">${strengthsList}</ul>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-flag-checkered text-emerald-500"></i> ทักษะพัฒนา 90 วันแรก</p>
+                        <ul class="space-y-1">${skillsList}</ul>
+                    </div>
+                </div>
+                ${progressHtml}
+            </div>
+        `;
+        */
+        
+        const html = `
+            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
+                <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-gray-800">✨ พิมพ์เขียวของ <span class="text-indigo-600">${escapeHtml(nickname) || 'นักเดินทาง'}</span></h3>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <span class="destiny-badge text-white px-4 py-1 rounded-full text-sm font-mono shadow-md"><i class="fa-regular fa-chart-line mr-1"></i> Mission ${destiny}</span>
+                            <span class="lifepath-badge text-white px-4 py-1 rounded-full text-sm font-mono shadow-md"><i class="fa-regular fa-star mr-1"></i> Life Path ${lifePath}</span>
+                        </div>
+                    </div>
+                    <div id="playButtonAnchor" class="flex-shrink-0"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -522,8 +550,7 @@
         // เลื่อนไปที่ผลลัพธ์
         document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         
-        
-        
+
         // แสดงปุ่ม playButton และอัปเดตเพลงตาม lifePath ปัจจุบัน
         const playBtn = document.getElementById('playBttn');
         if (playBtn) {
@@ -532,8 +559,6 @@
             playBtn.setAttribute('data-lifepath', lifePath);
         }
         
-        
-
     });
     
     // ปุ่ม global preview
