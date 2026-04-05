@@ -1,7 +1,7 @@
 // Service Worker สำหรับ Psychomatrix Music Basic Edition
 
 // 1. เปลี่ยนเลขเวอร์ชันตรงนี้ (v1.1, v1.2) เพื่อให้ระบบล้าง Cache เก่าอัตโนมัติ
-const VERSION = 'v2.6'; 
+const VERSION = 'v2.9.0'; 
 const CACHE_NAME = `psychomatrix-music-basic-${VERSION}`;
 const STATIC_CACHE_NAME = `psychomatrix-static-basic-${VERSION}`;
 const DYNAMIC_CACHE_NAME = `psychomatrix-dynamic-basic-${VERSION}`;
@@ -23,7 +23,7 @@ const PRECACHE_ASSETS = [
   './js/storytelling-engin.js',
   './js/music-audio.js',
   './js/ui-display.js',
-  './js/pwa-handler.js',
+  './js/pwa-handler.js?v=3.0',
   './assets/logo.png',
   './icons/favicon.ico',  
   './icons/icon-72x72.png',

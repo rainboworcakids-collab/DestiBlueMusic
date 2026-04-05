@@ -1,13 +1,14 @@
 {
   "name": "DestiBlue Music",
   "short_name": "DestiBlue Music",
-  "description": "สร้างเพลงส่วนตัวจากตัวเลขชีวิตของคุณ Your Destiny Blueprint Music",
+  "description": "สร้างเพลงส่วนตัวจากตัวเลขชีวิตของคุณ Your Music Destiny Blueprint",
   "theme_color": "#4f46e5",
-  "background_color": "#ffffff",
+  "background_color": "#1e1b4b",
   "display": "standalone",
   "orientation": "any",
   "start_url": "./index.html",
   "scope": "./",
+  "id": "./index.html",
   "icons": [
     {
       "src": "./icons/icon-72x72.png",
@@ -43,7 +44,7 @@
       "src": "./icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "./icons/icon-384x384.png",
@@ -55,21 +56,28 @@
       "src": "./icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
-    "categories": ["music", "productivity", "entertainment"],
-    "lang": "th-TH",
-    "dir": "ltr",
-    "prefer_related_applications": false,
-    "shortcuts": [
-        {
-            "name": "สร้างเพลงใหม่",
-            "short_name": "New Song",
-            "description": "สร้างเพลงจากวันเกิดของคุณ",
-            "url": "./index.html?action=new",
-            "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
-        }
-    ],
-    "related_applications": []
+  "categories": ["music", "productivity", "entertainment"],
+  "lang": "th-TH",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "สร้างเพลงใหม่",
+      "short_name": "New Song",
+      "description": "สร้างเพลงจากวันเกิดของคุณ",
+      "url": "./index.html?action=new",
+      "icons": [{ "src": "./icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ติดตั้งแอป",
+      "short_name": "Install",
+      "description": "เพิ่มลงหน้าจอหลัก",
+      "url": "./index.html?action=install&ref=shortcut",
+      "icons": [{ "src": "./icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": []
 }
