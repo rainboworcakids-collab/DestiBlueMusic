@@ -483,6 +483,7 @@
         container.innerHTML = html;
         container.classList.remove('hidden');
 
+/*
         const playBtnDynamic = document.getElementById('playButton');
         const anchor = document.getElementById('playButtonAnchor');
         if ( playBtnDynamic && anchor) {
@@ -500,6 +501,31 @@
                 playMusicByLifePath(lp);
             });
         }
+        
+*/        
+        
+        
+        const playBtnDynamic = document.getElementById('playButton');
+        const anchor = document.getElementById('playButtonAnchor');
+        if (playBtnDynamic && anchor) {
+            anchor.appendChild(playBtnDynamic);
+            playBtnDynamic.style.display = 'inline-flex';
+            playBtnDynamic.style.position = 'relative';
+            playBtnDynamic.style.margin = '0';
+            playBtnDynamic.style.top = 'auto';
+            playBtnDynamic.style.right = 'auto';
+            playBtnDynamic.setAttribute('data-lifepath', lifePath);
+            // ผูก event (ถ้ายังไม่มี)
+            playBtnDynamic.addEventListener('click', (e) => {
+                e.preventDefault();
+                playMusicByLifePath(lifePath);
+            });
+        }
+        
+        
+        
+        
+        
     }
     
     // ฟังก์ชันเล่นเพลงตาม lifePath (ใช้กับ global button)
