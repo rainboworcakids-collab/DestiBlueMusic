@@ -1,2 +1,2 @@
-# DestiBlueMusic
-DestiBlueMusic : Your Destiny Blueprint Music
+# MLQ-Music
+MLQ-Music : Your Mission Life Quest Blueprint Music
