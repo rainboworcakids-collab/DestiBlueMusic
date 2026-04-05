@@ -1,8 +1,14 @@
 // NumerologyToMusicConverter.js v1.2
 // แก้ไขจาก v1.1:
 //   [FIX] getEnergyMapping: รองรับภาษาไทย 'หยิน'/'หยาง' เพิ่มเติมจาก 'Yin'/'Yang'
+// แก้ไขจาก v1.2:
+//         const tempo = baseTempos[lifePathNumber]   เป็น     const tempo = destinyNumber;  
 
-console.log("[NumerologyToMusicConverter] 🔧 Module version v1.2 - INITIALIZING...");
+
+
+window.NumerologyToMusicConverter_VERSION = 1.3;
+
+console.log("[NumerologyToMusicConverter] 🔧 Module version v" + window.NumerologyToMusicConverter_VERSION + " - INITIALIZING...");
 
 // ========== 1. APPROVED FUNCTIONS ==========
 const APPROVED_FUNCTIONS_Converter = {
@@ -59,7 +65,7 @@ class NumerologyToMusicConverter {
             const elementMapping = this.getElementMapping(normElement);
 
             // 2. ใช้เลขชีวิตกำหนด tempo และ mood
-            const lifePathMapping = this.getLifePathMapping(lifePath);
+            const lifePathMapping = this.getLifePathMapping(lifePath,destinyNumber);
 
             // 3. ใช้พลังงานกำหนด effects
             const energyMapping = this.getEnergyMapping(energy);
@@ -162,7 +168,7 @@ class NumerologyToMusicConverter {
     /**
      * ดึง mapping ตามเลขชีวิต (lifePath 1-9)
      */
-    getLifePathMapping(lifePathNumber) {
+    getLifePathMapping(lifePathNumber,destinyNumber) {
         verifyFunctionApproval('getLifePathMapping');
         const baseTempos = {
             1: 132,
@@ -188,7 +194,8 @@ class NumerologyToMusicConverter {
             9: { mood: 'compassionate', intensity: 'medium' }
         };
 
-        const tempo = baseTempos[lifePathNumber];
+//        const tempo = baseTempos[lifePathNumber];
+        const tempo = destinyNumber;  
         const mood = moodMappings[lifePathNumber];
         if (!tempo || !mood) {
             throw new Error(`[NumerologyToMusicConverter] Invalid lifePathNumber: ${lifePathNumber}`);
@@ -315,4 +322,4 @@ if (typeof window !== 'undefined') {
     console.log("[NumerologyToMusicConverter] ✅ Exported to window");
 }
 
-console.log("[NumerologyToMusicConverter] ✅ v1.1 loaded");
+console.log("[NumerologyToMusicConverter] ✅ v" + window.NumerologyToMusicConverter_VERSION + " loaded");

@@ -4,7 +4,9 @@
 // กฎ: ห้ามสร้าง Mock Data, ต้อง validate ทุก Input/Output ผ่าน DataContract,
 //      ใช้เฉพาะฟังก์ชันที่ได้รับอนุมัติ, ไม่มี Cross-Module Fallback
 
-console.log("[EdgeIntegration] 🔧 client_edge-function-integration v3.7 - INITIALIZING...");
+window.EdgeIntegration_VERSION = 3.7;
+
+console.log("[EdgeIntegration] 🔧 client_edge-function-integration v" + window.EdgeIntegration_VERSION + " - INITIALIZING...");
 
 // ========== 1. APPROVED FUNCTIONS (กฎข้อ 0) ==========
 const APPROVED_FUNCTIONS_EDGE = {
@@ -49,7 +51,7 @@ class EdgeFunctionIntegration {
     this.cache = new Map();
     this.timeout = 30000;
     
-    console.log("[EdgeIntegration] ✅ v3.7 initialized (Proxy)");
+    console.log("[EdgeIntegration] ✅ v" + window.EdgeIntegration_VERSION + " initialized (Proxy)");
   }
 
   getBaseURL() {
@@ -504,5 +506,5 @@ function createEdgeFunctionIntegration() {
 
 if (typeof window !== 'undefined') {
   window.EdgeFunctionIntegration = createEdgeFunctionIntegration();
-  console.log('[EdgeIntegration] ✅ client_edge-function-integration v3.7 loaded');
+  console.log('[EdgeIntegration] ✅ client_edge-function-integration  v" + window.EdgeIntegration_VERSION + " loaded');
 }

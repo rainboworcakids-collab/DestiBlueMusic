@@ -1,4 +1,9 @@
-// form-psychomatrix.js v3.0.8 - [FIX] รับ defaultStyle และ customStyle จาก formData.musicPreference
+// v3.0.9 - form-psychomatrix.js
+// — หลัง dispatch `musicPointerChanged` เพิ่ม:
+//- สร้าง `sessionId` ด้วย `crypto.randomUUID()` (พร้อม fallback)
+//- บันทึก sessionId ใน AppMain state (`storytelling.sessionId`)
+//- dispatch `storyContextReady` พร้อม payload ครบ: sessionId, numerologyContext, musicPrefs, combinedDNA, timestamp, supabaseEnabled=false
+//  v3.0.8 - [FIX] รับ defaultStyle และ customStyle จาก formData.musicPreference
 // หน้าที่: จัดการฟอร์ม Psychomatrix + Coordinate Edge Functions + สร้าง MusicDNA 2 ชุด (default, custom) จากข้อมูลบุคคลชุดเดียวกัน
 //
 // แก้ไขจาก v3.0.7:
@@ -6,7 +11,9 @@
 //   - เปลี่ยนชื่อตัวแปรจาก lofiPrefs/studyPrefs เป็น defaultPrefs/customPrefs
 //   - คงการ dispatch combined DNA และเปิด loop mode ไว้เหมือนเดิม
 
-console.log("[FormPsychomatrix] FORM-PSYCHOMATRIX.JS v3.0.8 - INITIALIZING...");
+window.FormPsychomatrix_VERSION = '3.6.3';
+
+console.log("[FormPsychomatrix] FORM-PSYCHOMATRIX.JS v' + window.FormPsychomatrix_VERSION + '  - INITIALIZING...");
 
 // ========== 1. APPROVED FUNCTIONS (คงเดิม) ==========
 const APPROVED_FUNCTIONS_PsychoM = {
@@ -70,7 +77,7 @@ class FormPsychomatrixController {
         this._lastGenerateTime = 0;           // ใช้สำหรับ throttle ใน generateMusicDNA
         this.GENERATE_THROTTLE = 500;         // milliseconds
 
-        console.log("[FormPsychomatrix] v3.0.8 constructed");
+        console.log("[FormPsychomatrix] v3.0.9 constructed");
     }
 
     // ========== 3. INITIALIZATION ==========
@@ -78,7 +85,7 @@ class FormPsychomatrixController {
         if (this._initialized) return;
         this._initialized = true;
         verifyFunctionApproval('initialize');
-        console.log("[FormPsychomatrix] Initializing v3.0.8...");
+        console.log("[FormPsychomatrix] Initializing v' + window.FormPsychomatrix_VERSION + '...");
         try {
             this.checkDependencies();
             this.setupEventListeners();
@@ -130,7 +137,7 @@ class FormPsychomatrixController {
     // ========== 5. FORM SUBMISSION (CORE) ==========
     async handleFormSubmission(formData) {
         verifyFunctionApproval('handleFormSubmission');
-        console.log("[FormPsychomatrix] handleFormSubmission v3.0.8 - started", { 
+        console.log("[FormPsychomatrix] handleFormSubmission v3.0.9 - started", { 
             hasData: !!formData, 
             option: formData?.option 
         });
@@ -273,7 +280,7 @@ class FormPsychomatrixController {
             window.dispatchEvent(new CustomEvent('numerologyCalculated', { detail: numerologyContext, bubbles: true }));
             window.dispatchEvent(new CustomEvent('musicDNAStarted', { detail: defaultResult, bubbles: true }));
 
-            // ✅ [v3.0.8] ส่ง event ให้ music-audio.js เล่น combined DNA
+            // ✅ [  ส่ง event ให้ music-audio.js เล่น combined DNA
             window.dispatchEvent(new CustomEvent('musicPointerChanged', {
                 detail: {
                     combinedDNA: {
@@ -284,6 +291,33 @@ class FormPsychomatrixController {
                 bubbles: true
             }));
             console.log("[FormPsychomatrix] Dispatched musicPointerChanged for combined DNA");
+
+            // ✅ [Phase 1 Storytelling Trigger] dispatch storyContextReady
+            // sessionId สร้างครั้งเดียวต่อ session → เป็น key เชื่อม Supabase ใน Phase 2
+            const _sessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            window.AppMainController.setState('storytelling.sessionId', _sessionId);
+
+            window.dispatchEvent(new CustomEvent('storyContextReady', {
+                detail: {
+                    sessionId:        _sessionId,
+                    numerologyContext: numerologyContext,
+                    musicPrefs: {
+                        defaultStyle: defaultResult.config?.style || defaultResult.style,
+                        customStyle:  customResult.config?.style  || customResult.style,
+                        instruments:  defaultResult.instruments   || [],
+                        effects:      defaultResult.effects       || [],
+                        tempo:        defaultResult.config?.bpm,
+                        mood:         defaultResult.config?.mode,
+                    },
+                    combinedDNA:     { defaultDNA: defaultResult, customDNA: customResult },
+                    timestamp:       new Date().toISOString(),
+                    supabaseEnabled: false,  // Phase 1: local only — Phase 2+ เปลี่ยน true
+                },
+                bubbles: true
+            }));
+            console.log("[FormPsychomatrix] ✅ Dispatched storyContextReady (Phase 1), sessionId:", _sessionId);
 
             // ✅ เปิดใช้งาน Loop Mode เป็นค่าเริ่มต้น
             if (window.AudioController && typeof window.AudioController.setLoopEnabled === 'function') {
@@ -341,7 +375,7 @@ class FormPsychomatrixController {
         }
         this._lastGenerateTime = now;
 
-        console.log("[FormPsychomatrix] generateMusicDNA v3.0.8 (custom mode)");
+        console.log("[FormPsychomatrix] generateMusicDNA v3.0.9 (custom mode)");
 
         // ต้องมี numerologyData และ formData ใน state
         const numerologyData = this.state.numerologyRaw || this.state.numerologyContext;
@@ -561,7 +595,8 @@ class FormPsychomatrixController {
                 element: ne.element || elementLower,
                 intensity: ne.intensity
             })),
-            element: elementLower
+            element: elementLower,
+            energy: energy
         };
 
         console.log(`[FormPsychomatrix] Built preferences → style=${style}, element=${element}, instruments=${instruments.join(',')}`);
@@ -861,7 +896,7 @@ window.FormPsychomatrixController = {
 
 // ========== 16. AUTO-INITIALIZE ==========
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("[FormPsychomatrix] DOM loaded - Starting v3.0.8...");
+    console.log("[FormPsychomatrix] DOM loaded - Starting v3.0.9...");
     setTimeout(() => {
         if (typeof window.DataContract       === 'undefined' ||
             typeof window.AppMainController  === 'undefined' ||
@@ -875,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         try {
             window.FormPsychomatrixController.initialize();
-            console.log("[FormPsychomatrix] v3.0.8 ready!");
+            console.log("[FormPsychomatrix] v3.0.9 ready!");
         } catch (error) {
             console.error("[FormPsychomatrix] init failed:", error);
             const el = document.getElementById('error-message');
@@ -884,5 +919,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 300);
 });
 
-console.log("[FormPsychomatrix] FORM-PSYCHOMATRIX.JS v3.0.8 LOADED");
+console.log("[FormPsychomatrix] FORM-PSYCHOMATRIX.JS v3.0.9 LOADED");
 console.log("[FormPsychomatrix] Approved functions:", Object.keys(APPROVED_FUNCTIONS_PsychoM));

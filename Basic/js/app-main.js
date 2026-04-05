@@ -1,9 +1,14 @@
-// app-main.js v7.7 - STATE MANAGER CENTRAL (แก้ไข state ซ้ำซ้อน)
-// เพิ่ม:
+// app-main.js v7.9 - Fixed: setState music.current pointer string only, combinedDNA dispatch only in initialize
+// แก้ไข:
+//   - generateMusicDNA ตั้งค่า music.current เป็น string pointer ("music.default" หรือ "music.CustomSty")
+//   - setState('music.current') dispatch event เฉพาะ activeDNA ตาม pointer
+//   - initialize() dispatch combinedDNA เมื่อมีทั้ง default และ custom DNA
 //   - ตรวจสอบค่าเดิมก่อน setState เพื่อป้องกัน event ฟุ่มเฟือย
 //   - helper methods _getValueAtPath, _deepEqual
 
-console.log("🔧 APP-MAIN.JS v7.7 - STATE MANAGER CENTRAL INITIALIZING...");
+window.AppMain_VERSION = "7.9";
+
+console.log("🔧 APP-MAIN.JS v" + window.AppMain_VERSION + " - STATE MANAGER CENTRAL INITIALIZING...");
 
 if (typeof window.DataContract === 'undefined') {
     throw new Error("❌ CRITICAL: data-contract.js must be loaded before app-main.js");
@@ -40,7 +45,7 @@ const APPROVED_FUNCTIONS_AppMain = {
     handleLuckyNumberDataReceived: true,
     setupEventListeners: true,
     resetToDefaultMusic: true,
-    // ✅ internal helpers (เพิ่มใน approved list ด้วย)
+    // ✅ internal helpers
     _getValueAtPath: true,
     _deepEqual: true
 };
@@ -79,7 +84,7 @@ class AppMainController {
                 currentMode: 'personal-form'
             }
         };
-        console.log("✅ AppMainController v7.7 initialized");
+        console.log("✅ AppMainController v"+ window.AppMain_VERSION +  " initialized");
     }
 
     // ---------- helper methods สำหรับเปรียบเทียบค่า ----------
@@ -96,20 +101,52 @@ class AppMainController {
 
     _deepEqual(a, b) {
         verifyFunctionApproval('_deepEqual');
-        // ใช้ JSON.stringify สำหรับ object ทั่วไป (รวมถึง null, undefined)
-        // ถ้าเป็น primitive ก็ใช้ === ได้ แต่ JSON.stringify ก็ครอบคลุม
         return JSON.stringify(a) === JSON.stringify(b);
     }
 
     // ---------- core state methods ----------
     initialize() {
         verifyFunctionApproval('initialize');
-        console.log("🚀 Initializing AppMain v7.7...");
+        console.log("🚀 Initializing AppMain v" + window.AppMain_VERSION + "...");
         try {
             this.loadPersistedData();
             this.setupEventListeners();
             this.updateUIFromState();
-            console.log("✅ AppMain v7.7 initialized successfully");
+
+            // ✅ [v7.9] หลัง restore state จาก localStorage ครบแล้ว
+            // ถ้ามีทั้ง defaultDNA และ customDNA → dispatch musicPointerChanged แบบ combined
+            // เพื่อให้ MusicAudio รู้ว่ามี DNA พร้อมเล่นทั้งสองท่อน
+            const defaultDNA = this.state.music.default;
+            const customDNA = this.state.music.CustomSty;
+            const currentPointer = this.state.music.current || 'music.default';
+
+            if (defaultDNA?.sequence && customDNA?.sequence) {
+                console.log("📡 [AppMain] Dispatching combined musicPointerChanged after restore");
+                window.dispatchEvent(new CustomEvent('musicPointerChanged', {
+                    detail: {
+                        newPointer: currentPointer,
+                        activeDNA: this.getActiveMusicDNA(),
+                        combinedDNA: { defaultDNA, customDNA }
+                    },
+                    bubbles: true
+                }));
+            } else if (defaultDNA?.sequence) {
+                console.log("📡 [AppMain] Dispatching single musicPointerChanged after restore");
+                window.dispatchEvent(new CustomEvent('musicPointerChanged', {
+                    detail: {
+                        newPointer: currentPointer,
+                        activeDNA: defaultDNA
+                    },
+                    bubbles: true
+                }));
+            }
+
+            // เรียก initialize MusicAudio ถ้ามี
+            if (window.AudioController?.initialize && !window.AudioController.initialized) {
+                window.AudioController.initialize();
+            }
+
+            console.log("✅ AppMain   v"  +  window.AppMain_VERSION + " initialized successfully");
         } catch (error) {
             console.error("❌ AppMain initialization failed:", error);
             throw error;
@@ -131,11 +168,11 @@ class AppMainController {
     setState(path, value) {
         verifyFunctionApproval('setState');
 
-        // === [NEW] ตรวจสอบว่าค่าเปลี่ยนหรือไม่ ===
+        // ตรวจสอบว่าค่าเปลี่ยนหรือไม่
         const oldValue = this._getValueAtPath(path);
         if (this._deepEqual(oldValue, value)) {
             console.log(`[AppMain] setState skipped (no change): ${path}`);
-            return true; // ไม่เปลี่ยนแปลง
+            return true;
         }
 
         const validation = this.validateStateUpdate(path, value);
@@ -160,10 +197,14 @@ class AppMainController {
             bubbles: true
         }));
 
+        // ✅ [v7.9] เมื่อเปลี่ยน music.current ให้ dispatch เฉพาะ activeDNA ตาม pointer เท่านั้น
         if (path === 'music.current') {
             const activeDNA = this.getActiveMusicDNA();
             window.dispatchEvent(new CustomEvent('musicPointerChanged', {
-                detail: { newPointer: value, activeDNA },
+                detail: {
+                    newPointer: value,
+                    activeDNA
+                },
                 bubbles: true
             }));
         }
@@ -175,8 +216,6 @@ class AppMainController {
         return true;
     }
 
-
-    
     // ========== 5. ENHANCED VALIDATION METHODS ==========
     validateStateUpdate(path, value) {
         verifyFunctionApproval('validateState');
@@ -190,7 +229,6 @@ class AppMainController {
                     break;
                     
                 case 'userCustom':
-                    // อาจไม่มี schema แยก แต่อนุญาตให้เป็น object
                     if (value && typeof value !== 'object') {
                         errors.push('userCustom must be an object');
                     }
@@ -212,10 +250,13 @@ class AppMainController {
                     }
                     break;
                     
-                // validation ตาม P1: music.current ต้องเป็น string pointer
+                // ✅ validation ตาม P1: music.current ต้องเป็น string pointer
                 case 'music.current':
                     if (value !== null && typeof value !== 'string') {
-                        errors.push('music.current must be a string pointer ("music.default" or "music.CustomSty")');
+                        errors.push('music.current must be a string pointer');
+                    }
+                    if (value && !['music.default', 'music.CustomSty'].includes(value)) {
+                        errors.push('music.current must be either "music.default" or "music.CustomSty"');
                     }
                     break;
                     
@@ -225,7 +266,6 @@ class AppMainController {
                         errors.push('Music DNA must be an object');
                     }
                     if (value && (!value.config || !value.sequence)) {
-                        // เปลี่ยนจาก error เป็น warning (ตามแผน)
                         console.warn('[AppMain] ⚠️ Music DNA missing config/sequence (warning)');
                     }
                     break;
@@ -274,7 +314,6 @@ class AppMainController {
         }
         this.listeners.get(path).add(callback);
         
-        // Return unsubscribe function
         return () => {
             const listeners = this.listeners.get(path);
             if (listeners) {
@@ -289,7 +328,6 @@ class AppMainController {
     notifyListeners(path, newValue) {
         verifyFunctionApproval('notifyListeners');
         
-        // แจ้ง subscribers ที่ตรง path พอดี
         const listeners = this.listeners.get(path);
         if (listeners) {
             listeners.forEach(cb => {
@@ -301,7 +339,6 @@ class AppMainController {
             });
         }
         
-        // แจ้ง wildcard subscribers (ถ้ามี)
         const wildcard = this.listeners.get('*');
         if (wildcard) {
             wildcard.forEach(cb => {
@@ -320,19 +357,14 @@ class AppMainController {
         console.log("📋 Processing form submission...", { option: formData.option });
         
         try {
-            // 1. Validate form data ตาม DataContract.js
             const validation = this.validateUserData(formData);
             if (!validation.valid) {
                 throw new Error(`Form validation failed: ${validation.errors.join(', ')}`);
             }
             
-            // 2. Save user data
             this.saveUserData(formData);
-            
-            // 3. Trigger numerology calculation through Form-Psychomatrix
             this.triggerFormPsychomatrixCalculation(formData);
             
-            // 4. Update UI state
             this.setState('ui.loading', true);
             this.setState('ui.currentView', 'calculating');
             
@@ -358,17 +390,14 @@ class AppMainController {
         const errors = [];
         
         try {
-            // ใช้ DataContract.js สำหรับ validation
             window.DataContract.validateInput(formData, 'app-main');
         } catch (error) {
             errors.push(error.message);
         }
         
-        // Additional business logic validation
         const option = formData.option || 'BD';
         const personalData = formData.personalData || {};
         
-        // ตรวจสอบตาม option ที่เลือก
         if (option.includes('FullName') && !personalData.fullName?.trim()) {
             errors.push('กรุณากรอกชื่อ-นามสกุล');
         }
@@ -381,7 +410,6 @@ class AppMainController {
             errors.push('กรุณากรอกวันเกิด');
         }
         
-        // ตรวจสอบรูปแบบวันเกิด (ต้องเป็น YYYY-MM-DD)
         if (personalData.birthDate) {
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(personalData.birthDate)) {
@@ -402,10 +430,8 @@ class AppMainController {
         console.log("📊 Handling Psychomatrix data received...");
         
         try {
-            // Validate with DataContract
             window.DataContract.validatePsychomatrixOutput(data);
             
-            // Save to state
             this.setState('psychomatrix', data);
             this.setState('edgeFunctions.psychomatrix', {
                 data: data,
@@ -415,7 +441,6 @@ class AppMainController {
             
             console.log("✅ Psychomatrix data saved to state");
             
-            // Dispatch event for other modules
             this.dispatchEvent('psychomatrixDataReady', data);
             
             return true;
@@ -437,10 +462,8 @@ class AppMainController {
         console.log("🍀 Handling Lucky Number data received...");
         
         try {
-            // Validate with DataContract
             window.DataContract.validateLuckyNumberOutput(data);
             
-            // Save to state
             this.setState('luckyNumber', data);
             this.setState('edgeFunctions.luckyNumber', {
                 data: data,
@@ -450,7 +473,6 @@ class AppMainController {
             
             console.log("✅ Lucky Number data saved to state");
             
-            // Dispatch event for other modules
             this.dispatchEvent('luckyNumberDataReady', data);
             
             return true;
@@ -472,22 +494,17 @@ class AppMainController {
         console.log("🔢 Handling Numerology Context update...");
         
         try {
-            // Validate with DataContract
             window.DataContract.validateNumerologyContext(numerologyContext);
             
-            // Save to state
             this.setState('numerology', numerologyContext);
             
-            // Update UI state
             this.setState('ui.loading', false);
             this.setState('ui.currentView', 'numerology');
             
             console.log("✅ Numerology context saved to state");
             
-            // Show success toast
             this.showToast('คำนวณตัวเลขศาสตร์สำเร็จ!', 'success');
             
-            // Dispatch event for other modules
             this.dispatchEvent('numerologyReady', numerologyContext);
             
             return true;
@@ -513,29 +530,28 @@ class AppMainController {
                 throw new Error("❌ Missing required data for Music DNA generation");
             }
             
-            // Validate before sending to Edge Function
             const validation = this.validateForEdgeFunction(numerologyData, userData);
             if (!validation.valid) {
                 throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
             }
             
-            // Update UI state
             this.setState('ui.loading', true);
             this.setState('ui.currentView', 'generating');
             
-            // ส่งไปยัง Edge Function ผ่าน edge-function-integration.js
             const musicDNA = await this.sendToEdgeFunction(numerologyData, userData);
             
-            // ตรวจสอบ default และ set ทั้ง current/default ตามความเหมาะสม
+            // ✅ [v7.9] ตั้งค่า music.current เป็น string pointer เสมอ
             const currentDefault = this.getState('music.default');
             if (!currentDefault) {
-                // ครั้งแรก: set ทั้ง current และ default
+                // ครั้งแรก: set default และชี้ไปที่ default
                 this.setState('music.default', musicDNA);
+                this.setState('music.current', 'music.default');
+            } else {
+                // มี default อยู่แล้ว → set custom และชี้ไปที่ custom
+                this.setState('music.CustomSty', musicDNA);
+                this.setState('music.current', 'music.CustomSty');
             }
-            // set current เสมอ (สำหรับเพลงใหม่)
-            this.setState('music.current', musicDNA);
             
-            // Update UI state
             this.setState('ui.loading', false);
             this.setState('ui.currentView', 'music');
             
@@ -546,7 +562,7 @@ class AppMainController {
             this.setState('ui.loading', false);
             this.setState('ui.currentView', 'error');
             this.showToast(`สร้างดนตรีล้มเหลว: ${error.message}`, 'error');
-            throw error; // NO FALLBACK - ตามกฎ
+            throw error;
         }
     }
     
@@ -557,20 +573,17 @@ class AppMainController {
         const option = userData.option || 'BD';
         
         try {
-            // 1. Validate numerology structure ตาม DataContract.js
             window.DataContract.validateNumerologyContext(numerologyData);
         } catch (error) {
             errors.push(`Numerology data invalid: ${error.message}`);
         }
         
         try {
-            // 2. Validate user data
             window.DataContract.validateInput(userData, 'app-main');
         } catch (error) {
             errors.push(`User data invalid: ${error.message}`);
         }
         
-        // 3. Validate required sources exist (ตาม DataContract)
         const requiredSources = {
             'BD': ['birthDate'],
             'IDC': ['id_card'],
@@ -605,18 +618,15 @@ class AppMainController {
         console.log("📡 Sending to Music Generator Edge Function via edge-function-integration...");
         
         try {
-            // เรียกผ่าน EdgeFunctionIntegration
             const result = await window.EdgeFunctionIntegration.callMusicGenerator(
                 numerologyData,
                 userData
             );
             
-            // Validate response structure
             if (!result || !result.musicDNA) {
                 throw new Error('Invalid response from music generator: missing musicDNA');
             }
             
-            // บันทึกผลลัพธ์ลง state
             this.setState('edgeFunctions.musicGenerator', {
                 data: result,
                 timestamp: new Date().toISOString(),
@@ -635,7 +645,7 @@ class AppMainController {
                 timestamp: new Date().toISOString(),
                 status: 'error'
             });
-            throw error; // NO FALLBACK
+            throw error;
         }
     }
     
@@ -644,11 +654,9 @@ class AppMainController {
         verifyFunctionApproval('saveUserData');
         
         try {
-            // Validate before saving
             window.DataContract.validateInput(formData, 'app-main');
             this.setState('user', formData);
             
-            // Save to localStorage
             try {
                 localStorage.setItem('psychomatrixUserData', JSON.stringify(formData));
             } catch (error) {
@@ -675,7 +683,6 @@ class AppMainController {
                     this.state.user = userData;
                     console.log("✅ Loaded valid user data");
                 } catch (error) {
-                    // ข้อมูลเสีย -> ลบทิ้ง
                     console.warn(`⚠️ Invalid ${userKey}, removing:`, error.message);
                     localStorage.removeItem(userKey);
                     if (typeof this.showToast === 'function') {
@@ -684,13 +691,12 @@ class AppMainController {
                 }
             }
             
-            // ---------- USER CUSTOM DATA (Form 2) ----------
+            // ---------- USER CUSTOM DATA ----------
             const userCustomKey = 'psychomatrixUserDataCustom';
             const userCustomStr = localStorage.getItem(userCustomKey);
             if (userCustomStr) {
                 try {
                     const userCustom = JSON.parse(userCustomStr);
-                    // อาจไม่ต้อง validate ลึก
                     this.state.userCustom = userCustom;
                     console.log("✅ Loaded user custom data");
                 } catch (error) {
@@ -749,17 +755,12 @@ class AppMainController {
             if (musicCurrStr) {
                 try {
                     const musicCurr = JSON.parse(musicCurrStr);
-                    // ตาม P1 ปัจจุบัน music.current ต้องเป็น string เท่านั้น
-                    // ถ้าเป็น object (เวอร์ชันเก่า) ให้แปลง?
                     if (typeof musicCurr === 'string') {
                         this.state.music.current = musicCurr;
                         console.log("✅ Loaded music current pointer:", musicCurr);
                     } else {
-                        // ถ้าเป็น object เก่า ให้ลองย้ายไป default หรือ CustomSty?
                         console.warn(`⚠️ ${musicCurrKey} is object, attempting migration`);
-                        // อาจจะเก็บไว้ใน default หรือ CustomSty? แต่เราไม่รู้ว่าเป็นอันไหน
-                        // ปล่อยให้ migrate จัดการ
-                        this.state.music.current = null; // ให้ migrate จัดการ
+                        this.state.music.current = null;
                     }
                 } catch (error) {
                     console.warn(`⚠️ Invalid ${musicCurrKey}, removing:`, error.message);
@@ -817,7 +818,6 @@ class AppMainController {
                 }
             }
             
-            // ===== เรียก migrate หลังโหลด state เสร็จ =====
             this.migrateStorageSchema();
             
         } catch (error) {
@@ -826,7 +826,6 @@ class AppMainController {
     }
     
     persistState(path, value) {
-        // Only persist certain states
         const persistMap = {
             'user':                'psychomatrixUserData',
             'userCustom':          'psychomatrixUserDataCustom',
@@ -839,7 +838,6 @@ class AppMainController {
             'edgeFunctions':       'psychomatrixEdgeFunctions'
         };
         
-        // Check if this path should be persisted
         let storageKey = null;
         
         if (persistMap[path]) {
@@ -863,17 +861,14 @@ class AppMainController {
         
         console.log("🔄 Updating UI from state...");
         
-        // ตรวจสอบว่ามี UI module หรือไม่
         if (typeof window.UI !== 'undefined' && typeof window.UI.updateFromState === 'function') {
             window.UI.updateFromState(this.getState());
         }
         
-        // ตรวจสอบว่ามี Form Psychomatrix module หรือไม่
         if (typeof window.FormPsychomatrix !== 'undefined' && typeof window.FormPsychomatrix.updateFromState === 'function') {
             window.FormPsychomatrix.updateFromState(this.getState());
         }
         
-        // Dispatch event สำหรับ modules อื่นๆ
         this.dispatchEvent('stateUpdated', this.getState());
     }
     
@@ -893,7 +888,6 @@ class AppMainController {
         
         console.log(`📢 Toast (${type}): ${message}`);
         
-        // Dispatch toast event
         const event = new CustomEvent('showToast', {
             detail: { message, type }
         });
@@ -906,53 +900,44 @@ class AppMainController {
         
         console.log("🔌 Setting up enhanced event listeners...");
         
-        // Listen for form submissions (จาก form-ui.js)
         window.addEventListener('formSubmitted', (event) => {
             if (event.detail) {
                 this.processFormSubmission(event.detail);
             }
         });
         
-        // Listen for form submissions (จาก form-psychomatrix.js)
         window.addEventListener('personalFormSubmitted', (event) => {
             if (event.detail && event.detail.data) {
                 this.processFormSubmission(event.detail.data);
             }
         });
         
-        // Listen for numerology calculation results (จาก form-psychomatrix.js)
         window.addEventListener('numerologyCalculated', (event) => {
             this.handleNumerologyUpdated(event.detail);
         });
         
-        // Listen for psychomatrix data (จาก form-psychomatrix.js)
         window.addEventListener('psychomatrixDataReceived', (event) => {
             this.handlePsychomatrixDataReceived(event.detail);
         });
         
-        // Listen for lucky number data (จาก form-psychomatrix.js)
         window.addEventListener('luckyNumberDataReceived', (event) => {
             this.handleLuckyNumberDataReceived(event.detail);
         });
         
-        // Listen for music generation requests
         window.addEventListener('generateMusicRequest', () => {
             this.generateMusicDNA();
         });
         
-        // Listen for state change requests from UI
         window.addEventListener('updateUIRequest', () => {
             this.updateUIFromState();
         });
         
-        // Listen for mode changes
         window.addEventListener('psychomatrixModeChanged', (event) => {
             if (event.detail && event.detail.mode) {
                 this.setState('ui.currentMode', event.detail.mode);
             }
         });
         
-        // Listen for option changes
         window.addEventListener('calculationOptionChanged', (event) => {
             if (event.detail && event.detail.option) {
                 const userData = this.getState('user');
@@ -976,7 +961,6 @@ class AppMainController {
     }
     
     triggerFormPsychomatrixCalculation(formData) {
-        // Dispatch event for Form-Psychomatrix to handle calculation
         const event = new CustomEvent('calculateNumerology', {
             detail: formData
         });
@@ -1011,17 +995,14 @@ class AppMainController {
             }
         };
         
-        // เคลียร์ listeners (optional)
         this.listeners.clear();
         
         console.log("🔄 State reset complete");
     }
     
-    // ========== 13.1 RESET DATA ONLY ==========
     resetStateDataOnly() {
         verifyFunctionApproval('resetStateDataOnly');
         
-        // เคลียร์เฉพาะข้อมูลผู้ใช้, numerology, music (คง listeners ไว้)
         this.state.user = null;
         this.state.userCustom = null;
         this.state.numerology = null;
@@ -1034,7 +1015,6 @@ class AppMainController {
             musicGenerator: null
         };
         
-        // ลบจาก localStorage
         const keysToRemove = [
             'psychomatrixUserData',
             'psychomatrixUserDataCustom',
@@ -1096,9 +1076,6 @@ class AppMainController {
         if (!savedVer || savedVer < '1.2') {
             console.log('[AppMain] 🔄 Running migration from <1.2');
             
-            // migration จาก v1.0/v1.1 → v1.2:
-            // ถ้า music.current ยังไม่มี แต่ userCustom.useCustomDNA = true
-            // → ตั้ง pointer ให้ถูกต้อง
             if (!this.state.music.current) {
                 const pointer = this.state.userCustom?.useCustomDNA === true
                     ? 'music.CustomSty'
@@ -1108,7 +1085,6 @@ class AppMainController {
             }
         }
         
-        // บันทึก version ปัจจุบัน
         localStorage.setItem(
             'psychomatrixSchemaVersion',
             window.DataContractConstants.SCHEMA_VERSION
@@ -1118,7 +1094,6 @@ class AppMainController {
     
     // ========== 15. HELPER FUNCTIONS ==========
     formatFormDataForState(formData) {
-        // แปลง form data จาก UI ให้เป็นรูปแบบที่ DataContract ต้องการ
         const option = formData.option || 'BD';
         
         const formattedData = {
@@ -1136,7 +1111,6 @@ class AppMainController {
             }
         };
         
-        // Map ข้อมูลจาก formData เก่าไปใหม่
         if (formData.fullName) {
             formattedData.personalData.fullName = formData.fullName;
         }
@@ -1146,7 +1120,6 @@ class AppMainController {
         }
         
         if (formData.birthDate) {
-            // แปลง ISO date เป็น format ของ Edge Function
             try {
                 const edgeFormat = window.DataContract.convertISODateToEdgeFormat(formData.birthDate);
                 formattedData.personalData.birthDate = edgeFormat;
@@ -1158,7 +1131,7 @@ class AppMainController {
         return formattedData;
     }
     
-    // ========== 16. DEBUG & MONITORING (เฉพาะที่ได้รับอนุมัติ) ==========
+    // ========== 16. DEBUG & MONITORING ==========
     getStatusReport() {
         return {
             timestamp: new Date().toISOString(),
@@ -1212,41 +1185,31 @@ class AppMainController {
 }
 
 // ========== 17. GLOBAL EXPORT ==========
-// Create singleton instance
 window.AppMain = new AppMainController();
 
-// Export approved functions
 window.AppMainController = {
-    // State Management
     initialize: () => window.AppMain.initialize(),
     getState: (path) => window.AppMain.getState(path),
     setState: (path, value) => window.AppMain.setState(path, value),
     resetState: () => window.AppMain.resetState(),
     resetStateDataOnly: () => window.AppMain.resetStateDataOnly(),
-    getActiveMusicDNA: () => window.AppMain.getActiveMusicDNA(),   // ✅ เพิ่ม
+    getActiveMusicDNA: () => window.AppMain.getActiveMusicDNA(),
     subscribe: (path, callback) => window.AppMain.subscribe(path, callback),
     
-    // Form Handling
     processFormSubmission: (formData) => window.AppMain.processFormSubmission(formData),
-    
-    // Music Generation
     generateMusicDNA: () => window.AppMain.generateMusicDNA(),
     
-    // Form-Psychomatrix Integration
     handleNumerologyUpdated: (data) => window.AppMain.handleNumerologyUpdated(data),
     handlePsychomatrixDataReceived: (data) => window.AppMain.handlePsychomatrixDataReceived(data),
     handleLuckyNumberDataReceived: (data) => window.AppMain.handleLuckyNumberDataReceived(data),
     
-    // UI Coordination
     updateUIFromState: () => window.AppMain.updateUIFromState(),
     showForm: () => window.AppMain.showForm(),
     hideForm: () => window.AppMain.hideForm(),
     showToast: (message, type) => window.AppMain.showToast(message, type),
     
-    // Music Reset
     resetToDefaultMusic: () => window.AppMain.resetToDefaultMusic(),
     
-    // Helper Functions
     formatFormDataForState: (formData) => window.AppMain.formatFormDataForState(formData),
     getStatusReport: () => window.AppMain.getStatusReport(),
     validateAllData: () => window.AppMain.validateAllData()
@@ -1254,23 +1217,20 @@ window.AppMainController = {
 
 // ========== 18. AUTO-INITIALIZE ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("📄 DOM Content Loaded - Starting AppMain v7.6...");
+    console.log("📄 DOM Content Loaded - Starting AppMain v" + window.AppMain_VERSION + "...");
     
-    // Initialize app
     setTimeout(() => {
         try {
             window.AppMainController.initialize();
-            console.log("🎉 AppMain v7.6 ready! (State Manager Central with current/default/CustomSty)");
+            console.log("🎉 AppMain v" + window.AppMain_VERSION + " ready! (State Manager Central with current/default/CustomSty)");
         } catch (error) {
             console.error("❌ AppMain initialization failed:", error);
             
-            // Emergency fallback (basic UI only)
             const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) {
                 loadingScreen.classList.add('hidden');
             }
             
-            // Show error to user
             const errorContainer = document.getElementById('errorContainer');
             if (errorContainer) {
                 errorContainer.innerHTML = `
@@ -1289,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ========== 19. DEBUG VERIFICATION ==========
-console.log("✅ APP-MAIN.JS v7.6 LOADED");
+console.log("✅ APP-MAIN.JS v" + window.AppMain_VERSION + " LOADED");
 console.log("📋 Approved Functions APP-MAIN:", Object.keys(APPROVED_FUNCTIONS_AppMain));
 console.log("🔗 DataContract available:", typeof window.DataContract !== 'undefined');
 console.log("🔗 EdgeFunctionIntegration available:", typeof window.EdgeFunctionIntegration !== 'undefined');

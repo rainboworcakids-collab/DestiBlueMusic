@@ -1,9 +1,10 @@
-// ui-display.js - v3.3 (Music DNA Edition) - เพิ่มการแสดงข้อมูลตัวเลขและรองรับ current MusicDNA
-// การเปลี่ยนแปลงจาก v3.2:
-//   - เพิ่ม listener สำหรับ event 'stateChanged' และ 'musicPointerChanged' (G6a)
-//   - อัปเดตเวอร์ชันเป็น 3.3
+// ui-display.js - v3.6.3 (Music DNA Edition) - รวม Storytelling และ DNA Analysis ใน InfoPanel
+// — รับ events ใหม่:
+//- `storyFetching` → แสดง loading state ("กำลังสร้างเรื่องราว...")
+//- `storyError` → render fallbackStory หรือแสดง error message
+//- `storyDisplayed` → dispatch ท้าย `updateStorytellingDisplay()` พร้อม sessionId + timestamp
 
-window.UI_VERSION = '3.3';
+window.UI_VERSION = '3.6.3';
 
 // ========== 1. APPROVED FUNCTIONS ==========
 const APPROVED_FUNCTIONS_UI_Display = {
@@ -44,17 +45,23 @@ const APPROVED_FUNCTIONS_UI_Display = {
     updateElementDisk: true,
     updateMelodyInfo: true,
     updateSongInfo: true,
-    // 🔥 NEW functions
     loadUserData: true,
     setupEventListeners: true,
     updateUIFromState: true,
     getState: true,
-    updateFromState: true
+    updateFromState: true,
+    updateStorytellingDisplay: true,
+
+    updateMusicDNADetailedInfo: true,
+    getMusicStyleDetails: true,
+    showBothPanels: true,
+    hideBothPanels: true,
+    toggleBothPanels: true
 };
 
 function verifyFunctionApproval(functionName) {
     if (!APPROVED_FUNCTIONS_UI_Display[functionName]) {
- //       console.error(`🚫 (UI Display) Function "${functionName}" not in APPROVED_FUNCTIONS_UI_Display`);
+        // เงียบไว้ ตามเดิม
     }
 }
 
@@ -64,9 +71,10 @@ window.UI = {
     currentMusicDNA: null,
     lastEventReceived: null,
     domElementsStatus: {},
-    version: '3.3',
+    version: '3.6.3',
     savedFormData: null,
     isMusicDNAMode: false,
+    lastStory: null, // เก็บ story ล่าสุด
     
     initialize: function() {
         verifyFunctionApproval('initialize');
@@ -96,6 +104,12 @@ window.UI = {
     
         // ส่งสถานะไปยัง debug
         this.sendStatusToDebug();
+
+        // ทำให้ div#Storytelling เริ่มต้นเป็น hidden (ตามเดิม)
+        const storytellingDiv = document.getElementById('Storytelling');
+        if (storytellingDiv) storytellingDiv.classList.add('hidden');
+
+        // #musicDNADetailedInfo ควรมี class hidden ใน HTML อยู่แล้ว
     
         this.logDebug('✅ UI Display module initialized (Music DNA Ready)');
         return true;
@@ -184,7 +198,7 @@ window.UI = {
         const musicDNAStyles = document.createElement('style');
         musicDNAStyles.id = 'ui-musicdna-styles';
         musicDNAStyles.textContent = `
-            /* UI Display Module - Music DNA Edition - Version 3.3 */
+            /* UI Display Module - Music DNA Edition - Version 3.5 */
             
             /* Music DNA Specific Styles */
             .musicdna-storytelling {
@@ -365,6 +379,17 @@ window.UI = {
                 color: #ef4444;
             }
             
+            /* Style สำหรับ #musicDNADetailedInfo (v3.5) */
+            #musicDNADetailedInfo {
+                background: rgba(15, 23, 42, 0.8);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(99, 102, 241, 0.3);
+                border-radius: 1rem;
+                padding: 1.25rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            }
+            
             @keyframes ui-fadeInUp {
                 from { opacity: 0; transform: translateY(20px); }
                 to { opacity: 1; transform: translateY(0); }
@@ -463,7 +488,8 @@ window.UI = {
             'songInfo',
             'playButton',
             'playIcon',
-            'visualizer'
+            'visualizer',
+            'musicDNADetailedInfo' // เพิ่มเช็ค element ใหม่
         ];
         
         this.domElementsStatus = {};
@@ -483,40 +509,14 @@ window.UI = {
             }
         });
         
-        this.createMusicDNAInfoPanel();
+        // ไม่ต้องสร้าง pop-up panel อีกต่อไป (แต่ยังคงฟังก์ชันไว้)
+        // this.createMusicDNAInfoPanel();
         return Object.values(this.domElementsStatus).every(e => e.exists);
     },
     
+    // ฟังก์ชันเดิมที่เกี่ยวกับ pop-up (คงไว้แต่ไม่ใช้)
     createMusicDNAInfoPanel: function() {
-        verifyFunctionApproval('createMusicDNAInfoPanel');
-        if (document.getElementById('musicDNAInfoPanel')) {
-            this.logDebug('✅ Music DNA Info Panel already exists');
-            return;
-        }
-        
-        const panel = document.createElement('div');
-        panel.id = 'musicDNAInfoPanel';
-        panel.className = 'musicdna-info-panel hidden';
-        panel.innerHTML = `
-            <div class="musicdna-info-header">
-                <div class="musicdna-info-title">
-                    <i class="fas fa-dna"></i>
-                    <span>Music DNA Analysis</span>
-                </div>
-                <button class="musicdna-close-btn" onclick="window.UI.hideMusicDNAInfo()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div id="musicDNAInfoContent">
-                <div class="text-slate-400 text-center py-8">
-                    <i class="fas fa-music text-3xl mb-4"></i>
-                    <p>Music DNA data will appear here</p>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(panel);
-        this.logDebug('✅ Created Music DNA Info Panel');
+        // ไม่ใช้งานแล้ว
     },
     
     setupMusicDNAEventListeners: function() {
@@ -599,6 +599,25 @@ window.UI = {
             }
             if (window.AppState) window.AppState.isPlaying = true;
         });
+
+        // ✅ [FIX v2] musicDNACombined — รับ defaultDNA + customDNA พร้อมกัน แล้ว render ทันที
+        window.addEventListener('musicDNACombined', (e) => {
+            const { defaultDNA, customDNA, combinedDNA } = e.detail || {};
+            this.logDebug('🧬 musicDNACombined received', { defaultDNA: !!defaultDNA, customDNA: !!customDNA });
+            if (defaultDNA) this._cachedDefaultDNA = defaultDNA;
+            if (customDNA)  this._cachedCustomDNA  = customDNA;
+            // render card ทันทีหลังได้ข้อมูลครบ ไม่ต้องรอ displayMusicDNAInfo
+            const dnaForRender = combinedDNA || this.currentMusicDNA;
+            if (dnaForRender) this._scheduleDetailedInfoUpdate(dnaForRender);
+        });
+
+        // ✅ [FIX] playbackStateChanged ผ่าน window (แก้จาก EventBus เพียงอย่างเดียว)
+        window.addEventListener('playbackStateChanged', (e) => {
+            const isPlaying = e.detail?.isPlaying ?? false;
+            this.logDebug('🎵 playbackStateChanged (window) → isPlaying:', isPlaying);
+            if (window.AppState) window.AppState.isPlaying = isPlaying;
+            this._updateDNAStatusText(isPlaying);
+        });
         
         window.addEventListener('musicStopped', () => {
             this.logDebug('🎵 Music stopped event received');
@@ -654,6 +673,16 @@ window.UI = {
         }
     },
 
+    // ✅ [FIX] helper: อัพเดท Status text ใน Melody DNA Settings card แบบ live
+    _updateDNAStatusText: function(isPlaying) {
+        const label = isPlaying ? 'กำลังเล่น' : 'หยุด';
+        const statusEl = document.getElementById('musicStatusText');
+        if (statusEl) statusEl.textContent = isPlaying ? 'กำลังเล่น' : 'พร้อมเล่น';
+        const dnaStatus = document.getElementById('dnaCardStatusText');
+        if (dnaStatus) dnaStatus.textContent = label;
+        this.logDebug('✅ DNA Status updated →', label);
+    },
+
     // 🔥 NEW: setupEventListeners - ตั้งค่า listeners ทั่วไป (นอกจาก Music DNA)
     setupEventListeners: function() {
         verifyFunctionApproval('setupEventListeners');
@@ -679,16 +708,54 @@ window.UI = {
             }
         });
 
-        // listener สำหรับปุ่มเปิด panel
+        // ฟัง event storyGenerated จาก storytelling-engine
+        window.addEventListener('storyGenerated', (e) => {
+            const story = e.detail?.story;
+            if (story) {
+                this.lastStory = story;
+                this._currentSessionId = e.detail?.sessionId ?? null;
+                const storytellingDiv = document.getElementById('Storytelling');
+                if (storytellingDiv && !storytellingDiv.classList.contains('hidden')) {
+                    this.updateStorytellingDisplay(story);
+                }
+            }
+        });
+
+        // ✅ Phase 1: loading state เมื่อ engine กำลัง generate
+        window.addEventListener('storyFetching', (e) => {
+            this.logDebug('⏳ storyFetching received, source:', e.detail?.source);
+            const div = document.getElementById('Storytelling');
+            if (div) {
+                div.innerHTML = '<div class="storytelling-content p-4 bg-slate-800/50 rounded-lg"><p class="text-slate-400 animate-pulse">⏳ กำลังสร้างเรื่องราว...</p></div>';
+                div.classList.remove('hidden');
+            }
+        });
+
+        // ✅ Phase 1: error fallback — แสดง fallbackStory ถ้ามี
+        window.addEventListener('storyError', (e) => {
+            const { fallbackStory, sessionId, error } = e.detail || {};
+            this.logDebug('❌ storyError received, sessionId:', sessionId, 'error:', error);
+            if (fallbackStory) {
+                this.lastStory = fallbackStory;
+                this._currentSessionId = sessionId ?? null;
+                this.updateStorytellingDisplay(fallbackStory);
+            } else {
+                const div = document.getElementById('Storytelling');
+                if (div) {
+                    div.innerHTML = '<div class="storytelling-content p-4 bg-slate-800/50 rounded-lg"><p class="text-red-400">ไม่สามารถสร้างเรื่องราวได้</p></div>';
+                }
+            }
+        });
+
+        // listener สำหรับปุ่ม showMusicDNAInfoBtn (toggle ทั้งสอง div)
         const infoBtn = document.getElementById('showMusicDNAInfoBtn');
         if (infoBtn) {
-            infoBtn.addEventListener('click', () => {
-                if (this.currentMusicDNA) {
-                    this.showMusicDNAInfo(this.currentMusicDNA);
-                } else {
-                    this.logDebug('No Music DNA data to show');
-                    // อาจแสดง toast แจ้งเตือน
-                }
+            // clone เพื่อลบ listener เดิม
+            const newBtn = infoBtn.cloneNode(true);
+            infoBtn.parentNode.replaceChild(newBtn, infoBtn);
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleBothPanels();
             });
         }
 
@@ -791,6 +858,75 @@ window.UI = {
         this.logDebug('✅ Numerology details updated');
     },
     
+    
+        updateMainUIFromState: function(state = null) {
+        if (!state && window.AppMainController) state = window.AppMainController.getState();
+        if (!state) return;
+
+        // 1. ข้อมูลผู้ใช้
+        if (state.user) this.updateUserInfoDisplay(state.user);
+
+        // 2. แนวเพลงจาก user.musicPreference
+        const musicPref = state.user?.musicPreference;
+        if (musicPref) {
+            const mel1 = document.getElementById('currentMelody1');
+            const mel2 = document.getElementById('currentMelody2');
+            if (mel1) mel1.textContent = musicPref.defaultStyle || '-';
+            if (mel2) mel2.textContent = musicPref.customStyle || '-';
+        }
+
+        // 3. ดึง defaultDNA และ customDNA จาก cache (single source of truth)
+        const defaultDNA = this._cachedDefaultDNA
+            || window.AudioController?._defaultDNA
+            || null;
+        const customDNA = this._cachedCustomDNA
+            || window.AudioController?._customDNA
+            || null;
+
+        // --- Melody1 (จาก defaultDNA) ---
+        if (defaultDNA) {
+            const instr1 = document.getElementById('currentInstrument1');
+            const tempo1 = document.getElementById('currentTempo1');
+            const nature1 = document.getElementById('currentNatureFX1');
+            if (instr1) instr1.textContent = defaultDNA.instruments?.join(', ') || '-';
+            if (tempo1) tempo1.textContent = defaultDNA.config?.bpm ? defaultDNA.config.bpm + ' BPM' : '-';
+            if (nature1) nature1.textContent = defaultDNA.natureEffects?.map(ne => ne.type).join(', ') || '-';
+        } else {
+            // ถ้าไม่มี defaultDNA ให้แสดง -
+            const instr1 = document.getElementById('currentInstrument1');
+            const tempo1 = document.getElementById('currentTempo1');
+            const nature1 = document.getElementById('currentNatureFX1');
+            if (instr1) instr1.textContent = '-';
+            if (tempo1) tempo1.textContent = '-';
+            if (nature1) nature1.textContent = '-';
+        }
+
+        // --- Melody2 (จาก customDNA) ---
+        if (customDNA) {
+            const instr2 = document.getElementById('currentInstrument2');
+            const tempo2 = document.getElementById('currentTempo2');
+            const nature2 = document.getElementById('currentNatureFX2');
+            if (instr2) instr2.textContent = customDNA.instruments?.join(', ') || '-';
+            if (tempo2) tempo2.textContent = customDNA.config?.bpm ? customDNA.config.bpm + ' BPM' : '-';
+            if (nature2) nature2.textContent = customDNA.natureEffects?.map(ne => ne.type).join(', ') || '-';
+        } else {
+            const instr2 = document.getElementById('currentInstrument2');
+            const tempo2 = document.getElementById('currentTempo2');
+            const nature2 = document.getElementById('currentNatureFX2');
+            if (instr2) instr2.textContent = '-';
+            if (tempo2) tempo2.textContent = '-';
+            if (nature2) nature2.textContent = '-';
+        }
+
+        // --- สถานะการเล่น ---
+        const status = document.getElementById('musicStatusText');
+        if (status) {
+            const isPlaying = window.AudioController?.isPlaying || false;
+            status.textContent = isPlaying ? 'กำลังเล่น' : 'พร้อมเล่น';
+        }
+    },
+
+    
     displayMusicDNAInfo: function(musicDNAData) {
         verifyFunctionApproval('displayMusicDNAInfo');
         
@@ -813,20 +949,166 @@ window.UI = {
             
             this.currentMusicDNA = musicDNA;
             
+            // อัปเดตองค์ประกอบ UI ต่างๆ
             this.updateElementDiskFromMusicDNA(musicDNA);
             this.updateSongInfoFromMusicDNA(musicDNA);
             this.updateMelodyFromMusicDNA(musicDNA);
-            this.showMusicDNAInfo(musicDNA);
+            // this.showMusicDNAInfo(musicDNA); // ไม่ใช้ pop-up แล้ว
             this.updateNumerologyGridForMusicDNA(musicDNA);
+            
+            // อัปเดต DNA Analysis ใน #musicDNADetailedInfo (debounced เพื่อรอ cache ครบ)
+            this._scheduleDetailedInfoUpdate(musicDNA);
+            
+            // อัปเดต storytelling (ถ้ามี)
+            if (musicDNA.storytelling) {
+                this.lastStory = musicDNA.storytelling;
+                this.updateStorytellingDisplay(musicDNA.storytelling);
+            }
+            
+            // แสดงทั้งสองส่วนโดยอัตโนมัติ (remove hidden)
+            this.showBothPanels();
             
             this.logDebug('✅ Music DNA information displayed');
             return true;
             
         } catch (error) {
-            // ✅ [FIX] log message + stack จริงแทน {} 
             console.error(`[UI-MusicDNA] ❌ Failed to display Music DNA info: ${error?.message}`, error?.stack || error);
             this.logError('❌ Failed to display Music DNA info', error);
             return false;
+        }
+    },
+    
+    // ─── debounce helper: ป้องกัน render ซ้ำซ้อนหลายรอบใน tick เดียวกัน ───
+    _scheduleDetailedInfoUpdate: function(dna) {
+        if (this._detailUpdateTimer) clearTimeout(this._detailUpdateTimer);
+        this._detailUpdateTimer = setTimeout(() => {
+            this._detailUpdateTimer = null;
+            this.updateMusicDNADetailedInfo(dna || this.currentMusicDNA);
+        }, 80); // รอ 80ms เพื่อให้ cache ครบก่อน render
+    },
+
+    // ─── updateMusicDNADetailedInfo: single source of truth สำหรับ Melody DNA Settings card ───
+    updateMusicDNADetailedInfo: function(musicDNA) {
+        verifyFunctionApproval('updateMusicDNADetailedInfo');
+        const container = document.getElementById('musicDNADetailedInfo');
+        if (!container) {
+            this.logDebug('⚠️ #musicDNADetailedInfo not found');
+            return;
+        }
+
+        const dna = musicDNA || this.currentMusicDNA;
+        if (!dna) return;
+
+        const config      = dna.config;
+        const storytelling = dna.storytelling;
+        const sequence    = dna.sequence || [];
+
+        // ── ดึง defaultDNA และ customDNA: priority = cache (จาก musicDNACombined) → _customDNA ใน combinedDNA ──
+        const defaultDNA = this._cachedDefaultDNA
+            || window.AudioController?._defaultDNA
+            || null;
+
+        const customDNA  = this._cachedCustomDNA
+            || dna._customDNA
+            || window.AudioController?._customDNA
+            || null;
+
+        this.logDebug('🔍 DNA → default instruments:', defaultDNA?.instruments || '(none)',
+            '| custom instruments:', customDNA?.instruments || '(none)');
+
+        // ดึงชื่อแนวเพลงจาก dropdown
+        const musicStyle1 = document.getElementById('musicStyle')?.value || '-';
+        const musicStyle2 = document.getElementById('musicStyleCustom')?.value || '-';
+
+        // เริ่มสร้าง HTML
+        let infoHTML = `<div class="space-y-4">`;
+
+        // --- Music Story (ถ้ามี) ---
+        if (storytelling) {
+            infoHTML += `
+                <div class="musicdna-storytelling">
+                    <h3 class="font-semibold text-lg mb-2 text-amber-300"><i class="fas fa-dna mr-2"></i>Destiny Blueprint Music</h3>
+                    <div class="space-y-2 text-sm">
+                        ${storytelling.foundation ? `<p class="font-semibold  mb-2 text-purple-300" >รากฐาน: <span>${storytelling.foundation}</span></p>` : ''}
+                        ${storytelling.heartbeat ? `<p>${storytelling.heartbeat}</p>` : ''}
+                        ${storytelling.spark ? `<p>${storytelling.spark}</p>` : ''}
+                        ${storytelling.atmosphere ? `<p>${storytelling.atmosphere}</p>` : ''}
+                        ${storytelling.note ? `<p class="italic">${storytelling.note}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Current Melody Settings (ใช้ข้อมูลจาก defaultDNA และ customDNA) ---
+        infoHTML += `
+            <div class="musicdna-config-card">
+                <h3 class="font-semibold text-lg mb-2 text-amber-300"><i class="fas fa-sliders-h mr-2"></i>Melody DNA Settings</h3>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><span class="text-slate-400">Melody1:</span> <span class="font-bold text-indigo-300">${musicStyle1}</span></div>
+                    <div><span class="text-slate-400">Instrument:</span> <span class="font-bold text-indigo-300">${defaultDNA?.instruments?.join(', ') || '-'}</span></div>
+                    <div><span class="text-slate-400">Tempo:</span> <span class="font-bold text-indigo-300">${defaultDNA?.config?.bpm ? defaultDNA.config.bpm + ' BPM' : '-'}</span></div>
+                    <div><span class="text-slate-400">Nature FX:</span> <span class="font-bold text-green-300">${defaultDNA?.natureEffects?.map(ne => ne.type).join(', ') || '-'}</span></div>
+                    <div><span class="text-slate-400">Melody2:</span> <span class="font-bold text-purple-300">${musicStyle2}</span></div>
+                    <div><span class="text-slate-400">Instrument:</span> <span class="font-bold text-indigo-300">${customDNA?.instruments?.join(', ') || '-'}</span></div>
+                    <div><span class="text-slate-400">Tempo:</span> <span class="font-bold text-indigo-300">${customDNA?.config?.bpm ? customDNA.config.bpm + ' BPM' : '-'}</span></div>
+                    <div><span class="text-slate-400">Nature FX:</span> <span class="font-bold text-green-300">${customDNA?.natureEffects?.map(ne => ne.type).join(', ') || '-'}</span></div>
+                </div>
+                <div class="mt-2"><span class="text-slate-400">Status:</span> <span class="text-yellow-300" id="dnaCardStatusText">${(window.AudioController?.isPlaying || window.AppState?.isPlaying) ? 'กำลังเล่น' : 'หยุด'}</span></div>
+            </div>
+        `;
+
+        // --- Sequence Preview (ถ้ามี) ---
+        if (sequence.length > 0) {
+            const previewNotes = sequence.slice(0, 12);
+            infoHTML += `
+                <div class="musicdna-config-card">
+                    <h3 class="font-semibold text-lg mb-2 text-emerald-300"><i class="fas fa-list-ol mr-2"></i>Sequence DNA Preview</h3>
+                    <div class="flex flex-wrap gap-1">
+                        ${previewNotes.map((note, idx) => `
+                            <div class="musicdna-sequence-note ${note.isRootNote ? 'root-note' : 'regular-note'}" title="Time: ${note.time}, Duration: ${note.duration}">${note.note}</div>
+                        `).join('')}
+                    </div>
+                    <div class="text-xs text-slate-400 mt-2">Showing ${previewNotes.length} of ${sequence.length} notes</div>
+                </div>
+            `;
+        }
+
+        infoHTML += `</div>`;
+        container.innerHTML = infoHTML;
+        this.logDebug('✅ Music DNA detailed info updated');
+    },
+   
+    
+    // ฟังก์ชันสำหรับ toggle แสดง/ซ่อนทั้งสอง div
+    showBothPanels: function() {
+        verifyFunctionApproval('showBothPanels');
+        const storytellingDiv = document.getElementById('Storytelling');
+        const dnaDiv = document.getElementById('musicDNADetailedInfo');
+        if (storytellingDiv) storytellingDiv.classList.remove('hidden');
+        if (dnaDiv) dnaDiv.classList.remove('hidden');
+        this.logDebug('✅ Both panels shown');
+    },
+    
+    hideBothPanels: function() {
+        verifyFunctionApproval('hideBothPanels');
+        const storytellingDiv = document.getElementById('Storytelling');
+        const dnaDiv = document.getElementById('musicDNADetailedInfo');
+        if (storytellingDiv) storytellingDiv.classList.add('hidden');
+        if (dnaDiv) dnaDiv.classList.add('hidden');
+        this.logDebug('✅ Both panels hidden');
+    },
+    
+    toggleBothPanels: function() {
+        verifyFunctionApproval('toggleBothPanels');
+        const storytellingDiv = document.getElementById('Storytelling');
+        const dnaDiv = document.getElementById('musicDNADetailedInfo');
+        if (storytellingDiv && dnaDiv) {
+            const currentlyHidden = storytellingDiv.classList.contains('hidden');
+            if (currentlyHidden) {
+                this.showBothPanels();
+            } else {
+                this.hideBothPanels();
+            }
         }
     },
     
@@ -952,152 +1234,13 @@ window.UI = {
         });
     },
     
+    // ฟังก์ชันเดิมที่เกี่ยวกับ pop-up (ไม่ได้ใช้แล้ว)
     showMusicDNAInfo: function(musicDNA) {
-        verifyFunctionApproval('showMusicDNAInfo');
-        const dna = musicDNA || this.currentMusicDNA;
-        if (!dna) {
-            this.logDebug('No Music DNA to display');
-            return;
-        }
-
-        const panel = document.getElementById('musicDNAInfoPanel');
-        if (panel) panel.classList.remove('hidden');
-
-        const content = document.getElementById('musicDNAInfoContent');
-        
-        if (!panel || !content) {
-            this.logDebug('⚠️ Music DNA info panel not found');
-            return;
-        }
-        
-        const config = dna.config;
-        const storytelling = dna.storytelling;
-        const audit = dna.audit;
-        const sequence = dna.sequence || [];
-        
-        let infoHTML = `
-            <div class="space-y-4">
-                <div class="musicdna-config-card">
-                    <h3 class="font-semibold text-lg mb-2 text-indigo-300">
-                        <i class="fas fa-cog mr-2"></i>Music DNA Configuration
-                    </h3>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Root Note:</span>
-                            <span class="font-bold text-indigo-300">${config.root || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">BPM:</span>
-                            <span class="font-bold text-indigo-300">${config.bpm || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Scale:</span>
-                            <span class="font-bold text-indigo-300">${config.scale || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Element:</span>
-                            <span class="font-bold text-indigo-300">${config.element || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Mode:</span>
-                            <span class="font-bold text-indigo-300">${config.mode || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Foundation:</span>
-                            <span class="font-bold text-indigo-300">${config.foundationNumber || 'N/A'}</span>
-                        </div>
-                    </div>
-                </div>
-        `;
-        
-        if (storytelling) {
-            infoHTML += `
-                <div class="musicdna-storytelling">
-                    <h3 class="font-semibold text-lg mb-2 text-purple-300">
-                        <i class="fas fa-book-open mr-2"></i>Music Story
-                    </h3>
-                    <div class="space-y-2 text-sm">
-                        ${storytelling.foundation ? `<p>${storytelling.foundation}</p>` : ''}
-                        ${storytelling.heartbeat ? `<p>${storytelling.heartbeat}</p>` : ''}
-                        ${storytelling.spark ? `<p>${storytelling.spark}</p>` : ''}
-                        ${storytelling.atmosphere ? `<p>${storytelling.atmosphere}</p>` : ''}
-                        ${storytelling.note ? `<p class="italic">${storytelling.note}</p>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-        
-        if (audit) {
-            const isAuditValid = audit.firstNote && audit.totalNotes >= audit.expectedLength;
-            const auditClass = isAuditValid ? 'musicdna-audit-success' : 'musicdna-audit-warning';
-            
-            infoHTML += `
-                <div class="musicdna-config-card">
-                    <h3 class="font-semibold text-lg mb-2 text-amber-300">
-                        <i class="fas fa-clipboard-check mr-2"></i>DNA Audit
-                    </h3>
-                    <div class="space-y-2">
-                        <div class="flex flex-wrap gap-1">
-                            <span class="musicdna-audit-badge ${auditClass}">
-                                <i class="fas ${isAuditValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1"></i>
-                                ${isAuditValid ? 'Valid' : 'Warning'}
-                            </span>
-                            <span class="musicdna-audit-badge musicdna-audit-success">
-                                <i class="fas fa-music mr-1"></i>
-                                ${audit.totalNotes || 0} notes
-                            </span>
-                            <span class="musicdna-audit-badge musicdna-audit-success">
-                                <i class="fas fa-play mr-1"></i>
-                                First: ${audit.firstNote || 'N/A'}
-                            </span>
-                        </div>
-                        <div class="text-xs text-slate-400 mt-2">
-                            <div>Mode: ${audit.mode || 'N/A'}</div>
-                            <div>Expected: ${audit.expectedLength || 'N/A'} notes</div>
-                            <div>Root First: ${audit.isRootFirst ? 'Yes' : 'No'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        if (sequence.length > 0) {
-            const previewNotes = sequence.slice(0, 12);
-            infoHTML += `
-                <div class="musicdna-config-card">
-                    <h3 class="font-semibold text-lg mb-2 text-emerald-300">
-                        <i class="fas fa-list-ol mr-2"></i>Sequence Preview
-                    </h3>
-                    <div class="flex flex-wrap gap-1">
-                        ${previewNotes.map((note, idx) => `
-                            <div class="musicdna-sequence-note ${note.isRootNote ? 'root-note' : 'regular-note'}"
-                                 title="Time: ${note.time}, Duration: ${note.duration}">
-                                ${note.note}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="text-xs text-slate-400 mt-2">
-                        Showing ${previewNotes.length} of ${sequence.length} notes
-                    </div>
-                </div>
-            `;
-        }
-        
-        infoHTML += `</div>`;
-        
-        content.innerHTML = infoHTML;
-        panel.classList.remove('hidden');
-        
-        this.logDebug('✅ Music DNA info panel displayed');
+        // ไม่ใช้งาน
     },
     
     hideMusicDNAInfo: function() {
-        verifyFunctionApproval('hideMusicDNAInfo');
-        const panel = document.getElementById('musicDNAInfoPanel');
-        if (panel) {
-            panel.classList.add('hidden');
-            this.logDebug('✅ Music DNA info panel hidden');
-        }
+        // ไม่ใช้งาน
     },
     
     updateNumerologyGridForMusicDNA: function(musicDNA) {
@@ -1179,71 +1322,12 @@ window.UI = {
     
     updateMusicDNAStorytelling: function(storytelling) {
         verifyFunctionApproval('updateMusicDNAStorytelling');
-        const content = document.getElementById('musicDNAInfoContent');
-        if (!content || !storytelling) return;
-        
-        const storySection = content.querySelector('.musicdna-storytelling');
-        if (storySection) {
-            let storyHTML = `
-                <h3 class="font-semibold text-lg mb-2 text-purple-300">
-                    <i class="fas fa-book-open mr-2"></i>Music Story
-                </h3>
-                <div class="space-y-2 text-sm">
-            `;
-            
-            if (storytelling.foundation) storyHTML += `<p>${storytelling.foundation}</p>`;
-            if (storytelling.heartbeat) storyHTML += `<p>${storytelling.heartbeat}</p>`;
-            if (storytelling.spark) storyHTML += `<p>${storytelling.spark}</p>`;
-            if (storytelling.atmosphere) storyHTML += `<p>${storytelling.atmosphere}</p>`;
-            if (storytelling.note) storyHTML += `<p class="italic">${storytelling.note}</p>`;
-            
-            storyHTML += `</div>`;
-            storySection.innerHTML = storyHTML;
-            
-            this.logDebug('✅ Music DNA storytelling updated');
-        }
+        const content = document.getElementById('musicDNAInfoContent'); // อันนี้ยังเป็นของ pop-up เดิม อาจไม่ต้องใช้
+        // ไม่ต้องทำอะไร
     },
     
     updateMusicDNAAudit: function(audit) {
-        verifyFunctionApproval('updateMusicDNAAudit');
-        const content = document.getElementById('musicDNAInfoContent');
-        if (!content || !audit) return;
-        
-        const auditSection = content.querySelector('.musicdna-config-card:has(.fa-clipboard-check)');
-        if (auditSection) {
-            const isAuditValid = audit.firstNote && audit.totalNotes >= audit.expectedLength;
-            const auditClass = isAuditValid ? 'musicdna-audit-success' : 'musicdna-audit-warning';
-            
-            let auditHTML = `
-                <h3 class="font-semibold text-lg mb-2 text-amber-300">
-                    <i class="fas fa-clipboard-check mr-2"></i>DNA Audit
-                </h3>
-                <div class="space-y-2">
-                    <div class="flex flex-wrap gap-1">
-                        <span class="musicdna-audit-badge ${auditClass}">
-                            <i class="fas ${isAuditValid ? 'fa-check' : 'fa-exclamation-triangle'} mr-1"></i>
-                            ${isAuditValid ? 'Valid' : 'Warning'}
-                        </span>
-                        <span class="musicdna-audit-badge musicdna-audit-success">
-                            <i class="fas fa-music mr-1"></i>
-                            ${audit.totalNotes || 0} notes
-                        </span>
-                        <span class="musicdna-audit-badge musicdna-audit-success">
-                            <i class="fas fa-play mr-1"></i>
-                            First: ${audit.firstNote || 'N/A'}
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-400 mt-2">
-                        <div>Mode: ${audit.mode || 'N/A'}</div>
-                        <div>Expected: ${audit.expectedLength || 'N/A'} notes</div>
-                        <div>Root First: ${audit.isRootFirst ? 'Yes' : 'No'}</div>
-                    </div>
-                </div>
-            `;
-            
-            auditSection.innerHTML = auditHTML;
-            this.logDebug('✅ Music DNA audit updated');
-        }
+        // ไม่ต้องทำ
     },
     
     highlightMusicDNANote: function(noteData) {
@@ -1515,6 +1599,32 @@ window.UI = {
     checkMusicPlayingStatus: function() {
         verifyFunctionApproval('checkMusicPlayingStatus');
         this.logDebug('checkMusicPlayingStatus called (stub)');
+    },
+    
+    // ========== ฟังก์ชัน Storytelling ==========
+    updateStorytellingDisplay: function(story) {
+        verifyFunctionApproval('updateStorytellingDisplay');
+        const storytellingDiv = document.getElementById('Storytelling');
+        if (!storytellingDiv) return;
+
+        let html = '<div class="storytelling-content p-4 bg-slate-800/50 rounded-lg space-y-2">';
+        if (story.foundation) html += `<p><span class="font-semibold text-indigo-300">รากฐาน:</span> ${story.foundation}</p>`;
+        if (story.heartbeat) html += `<p><span class="font-semibold text-emerald-300">จังหวะชีวิต:</span> ${story.heartbeat}</p>`;
+        if (story.spark) html += `<p><span class="font-semibold text-amber-300">ประกาย:</span> ${story.spark}</p>`;
+        if (story.atmosphere) html += `<p><span class="font-semibold text-blue-300">บรรยากาศ:</span> ${story.atmosphere}</p>`;
+        if (story.note) html += `<p class="text-sm italic text-slate-400">${story.note}</p>`;
+        html += '</div>';
+
+        storytellingDiv.innerHTML = html;
+        this.logDebug('✅ Storytelling updated');
+
+        // ✅ Phase 1: dispatch storyDisplayed — audit trail + Phase 2 hook
+        window.dispatchEvent(new CustomEvent('storyDisplayed', {
+            detail: {
+                sessionId:   this._currentSessionId ?? null,
+                displayedAt: new Date().toISOString(),
+            }
+        }));
     }
 };
 

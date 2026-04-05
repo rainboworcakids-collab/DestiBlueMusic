@@ -1,18 +1,19 @@
 // ===============================================
 // debug-logger-v2.js - Modular Debug Log System
 // ===============================================
-// เวอร์ชัน: 2.0.0
-// วันที่: กุมาพันธ์ 2026
-// ปรับปรุง: รองรับการแยก log ตาม module, filter และ export แยก module
+// เวอร์ชัน: 2.1.0
+// วันที่: มีนาคม 2026
+// ปรับปรุง: เพิ่มแท็บ Versions สำหรับแสดง window.*VERSION และ module versions ต่างๆ
 // ===============================================
 
 class DebugLogger {
     constructor(options = {}) {
-        this.version = '2.0.0';
+        this.version = '2.1.0';   // อัปเดตเวอร์ชัน
 
         this.options = {
             containerId: 'debugLogContainer',
             logAreaId: 'debugLog',
+            versionsPanelId: 'versionsPanel',
             toggleBtnId: 'toggleDebugBtn',
             clearBtnId: 'clearLogBtn',
             timeDisplayId: 'currentTime',
@@ -29,6 +30,7 @@ class DebugLogger {
         this.currentTypeFilter = 'all';
         this.currentModuleFilter = 'all';
         this.isInitialized = false;
+        this.currentTab = 'logs';          // tabs: logs, versions
 
         // Icon mapping
         this.typeIcons = {
@@ -269,6 +271,155 @@ class DebugLogger {
         this._refreshDisplay();
     }
 
+    // ========== NEW: VERSIONS TAB METHODS ==========
+    /**
+     * เรียกใช้เมื่อสลับมาแท็บ Versions
+     */
+    showVersionsTab() {
+        this.currentTab = 'versions';
+        
+        // ซ่อน logs area, แสดง versions panel
+        const logArea = this._getElement(this.options.logAreaId);
+        const versionsPanel = this._getElement(this.options.versionsPanelId);
+        const filterRow = document.getElementById('logFilters');
+        const moduleRow = document.querySelector('.module-filter-row'); // หาโดย class หรือ id
+        
+        if (logArea) logArea.classList.add('hidden');
+        if (versionsPanel) {
+            versionsPanel.classList.remove('hidden');
+            this._renderVersions(); // อัปเดตข้อมูลทุกครั้งที่เปิดแท็บ
+        }
+        
+        // ซ่อนตัวกรอง logs
+        if (filterRow) filterRow.style.display = 'none';
+        if (moduleRow) moduleRow.style.display = 'none';
+        
+        // อัปเดต active tab style
+        this._updateTabButtons('versions');
+    }
+
+    /**
+     * เรียกใช้เมื่อสลับมาแท็บ Logs
+     */
+    showLogsTab() {
+        this.currentTab = 'logs';
+        
+        const logArea = this._getElement(this.options.logAreaId);
+        const versionsPanel = this._getElement(this.options.versionsPanelId);
+        const filterRow = document.getElementById('logFilters');
+        const moduleRow = document.querySelector('.module-filter-row');
+        
+        if (logArea) logArea.classList.remove('hidden');
+        if (versionsPanel) versionsPanel.classList.add('hidden');
+        
+        if (filterRow) filterRow.style.display = 'flex'; // หรือ block ตามเดิม
+        if (moduleRow) moduleRow.style.display = 'flex';
+        
+        this._updateTabButtons('logs');
+    }
+
+    /**
+     * อัปเดตปุ่มแท็บให้แสดงสถานะ active
+     */
+    _updateTabButtons(activeTab) {
+        const logsTab = document.getElementById('logsTabBtn');
+        const versionsTab = document.getElementById('versionsTabBtn');
+        if (!logsTab || !versionsTab) return;
+        
+        if (activeTab === 'logs') {
+            logsTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            logsTab.classList.remove('text-gray-600');
+            versionsTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+            versionsTab.classList.add('text-gray-600');
+        } else {
+            versionsTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            versionsTab.classList.remove('text-gray-600');
+            logsTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+            logsTab.classList.add('text-gray-600');
+        }
+    }
+
+    /**
+     * รวบรวมเวอร์ชันจาก window.*VERSION และ objects ต่างๆ
+     * @returns {Array<{module: string, version: string}>}
+     */
+    _getVersions() {
+        const versions = [];
+        const seen = new Set();
+
+        const add = (module, version) => {
+            if (!module || version === undefined || version === null) return;
+            const verStr = String(version).trim();
+            if (!verStr) return;
+            const key = `${module}|${verStr}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                versions.push({ module, version: verStr });
+            }
+        };
+
+        // 1. ไล่ property ใน window
+        for (const key in window) {
+            try {
+                const value = window[key];
+                if (!value) continue;
+
+                // ถ้า value เป็น object และมี property ชื่อ version
+                if (typeof value === 'object' && value !== null && 'version' in value) {
+                    add(key, value.version);
+                }
+
+                // ถ้า key มีคำว่า version (ไม่สนตัวพิมพ์เล็กใหญ่) และ value เป็น string/number
+                if (key.toLowerCase().includes('version')) {
+                    if (typeof value === 'string' || typeof value === 'number') {
+                        add(key, value);
+                    }
+                }
+
+                // ถ้า value เป็น function/constructor และมี static property VERSION
+                if (typeof value === 'function' && value.VERSION) {
+                    add(`${key}.VERSION`, value.VERSION);
+                }
+            } catch (e) {
+                // ป้องกัน cross-origin error
+            }
+        }
+
+        // 2. เพิ่ม DebugLogger เอง
+        add('DebugLogger', this.version);
+
+        // 3. ตรวจสอบตัวแปรทั่วไปเพิ่มเติม
+        if (window.VERSION) add('VERSION', window.VERSION);
+        if (window.APP_VERSION) add('APP_VERSION', window.APP_VERSION);
+        if (window.LIB_VERSION) add('LIB_VERSION', window.LIB_VERSION);
+
+        return versions;
+    }
+
+    /**
+     * แสดงตารางเวอร์ชันใน versionsPanel
+     */
+    _renderVersions() {
+        const panel = this._getElement(this.options.versionsPanelId);
+        if (!panel) return;
+        
+        const versions = this._getVersions();
+        if (versions.length === 0) {
+            panel.innerHTML = '<div class="text-gray-400 p-2 text-center">No version information found.</div>';
+            return;
+        }
+
+        // เรียงตามชื่อ module
+        versions.sort((a, b) => a.module.localeCompare(b.module));
+
+        let html = '<table class="w-full text-xs"><thead><tr class="bg-gray-800 text-gray-200"><th class="p-1 text-left">Module</th><th class="p-1 text-left">Version</th></tr></thead><tbody>';
+        versions.forEach(v => {
+            html += `<tr class="border-b border-gray-700"><td class="p-1">${this._escapeHtml(v.module)}</td><td class="p-1 font-mono">${this._escapeHtml(v.version)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        panel.innerHTML = html;
+    }
+
     // ========== PRIVATE METHODS ==========
     _extractModuleFromMessage(message) {
         const match = message.match(/^\[(.*?)\]\s*(.*)/s);  // s flag เพื่อจับ newline
@@ -434,12 +585,47 @@ class DebugLogger {
                     <button id="clearLogBtn" class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200">
                         <i class="fas fa-trash mr-1"></i>Clear
                     </button>
+                    <button id="clearAllStorageBtn" class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700" title="Clear all localStorage data">
+                        <i class="fas fa-database mr-1"></i>Clear Storage
+                    </button>
                 </div>
             </div>
             
-            <div class="p-3 bg-gray-900 text-gray-100">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="text-sm">
+            <!-- Tab Bar -->
+            <div class="flex border-b border-gray-200 bg-gray-100 px-2">
+                <button id="logsTabBtn" class="tab-btn px-3 py-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600" data-tab="logs">Logs</button>
+                <button id="versionsTabBtn" class="tab-btn px-3 py-1 text-sm font-medium text-gray-600" data-tab="versions">Versions</button>
+            </div>
+            
+            <!-- Content Area (หุ้มด้วย wrapper สำหรับปรับขนาดโดย minimize) -->
+            <div id="debugContentWrapper" class="h-64">
+                <div id="${this.options.logAreaId}" class="debug-log-area h-full overflow-y-auto font-mono text-sm bg-gray-900 text-gray-100 p-2"></div>
+                <div id="${this.options.versionsPanelId}" class="versions-panel h-full overflow-y-auto font-mono text-sm bg-gray-900 text-gray-100 p-2 hidden"></div>
+            </div>
+            
+            <!-- Bottom Controls -->
+            <div class="p-2 bg-gray-50 border-t border-gray-200 rounded-b-lg flex flex-col space-y-2">
+                <!-- Filter Buttons Row (ซ่อนเมื่ออยู่แท็บ Versions) -->
+                <div id="logFilters" class="flex flex-wrap gap-1">
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-blue-500 text-white" data-type="all">All</button>
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-blue-100 text-blue-700" data-type="info">Info</button>
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-green-100 text-green-700" data-type="success">Success</button>
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700" data-type="warning">Warning</button>
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-red-100 text-red-700" data-type="error">Error</button>
+                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-purple-100 text-purple-700" data-type="debug">Debug</button>
+                </div>
+                <!-- Module Filter Row -->
+                <div class="module-filter-row flex items-center space-x-2">
+                    <label class="text-xs text-gray-700">Module:</label>
+                    <select id="moduleFilterSelect" class="text-xs p-1 border rounded flex-1">
+                        <option value="all">All</option>
+                    </select>
+                    <button id="exportModuleBtn" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700" title="Export selected module">
+                        <i class="fas fa-download mr-1"></i>Export Module
+                    </button>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
                         <span>Time: <span id="${this.options.timeDisplayId}">00:00:00</span></span>
                     </div>
                     <div class="flex space-x-1">
@@ -449,36 +635,10 @@ class DebugLogger {
                         <button id="exportTextBtn" class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700" title="Export as Text">
                             <i class="fas fa-file-text mr-1"></i>TXT
                         </button>
+                        <button id="closeDebugBtn" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                            <i class="fas fa-times mr-1"></i>Close
+                        </button>
                     </div>
-                </div>
-                
-                <div id="${this.options.logAreaId}" class="debug-log-area h-64 overflow-y-auto font-mono text-sm">
-                    <!-- Logs will appear here -->
-                </div>
-            </div>
-            
-            <div class="p-2 bg-gray-50 border-t border-gray-200 rounded-b-lg flex flex-col space-y-2">
-                <div class="flex flex-wrap gap-1">
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-blue-500 text-white" data-type="all">All</button>
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-blue-100 text-blue-700" data-type="info">Info</button>
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-green-100 text-green-700" data-type="success">Success</button>
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700" data-type="warning">Warning</button>
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-red-100 text-red-700" data-type="error">Error</button>
-                    <button class="filter-type-btn px-2 py-1 text-xs rounded bg-purple-100 text-purple-700" data-type="debug">Debug</button>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-xs text-gray-700">Module:</label>
-                    <select id="moduleFilterSelect" class="text-xs p-1 border rounded flex-1">
-                        <option value="all">All</option>
-                    </select>
-                    <button id="exportModuleBtn" class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700" title="Export selected module">
-                        <i class="fas fa-download mr-1"></i>Export Module
-                    </button>
-                </div>
-                <div class="flex justify-end">
-                    <button id="closeDebugBtn" class="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
-                        <i class="fas fa-times mr-1"></i>Close
-                    </button>
                 </div>
             </div>
         `;
@@ -509,10 +669,10 @@ class DebugLogger {
         const minimizeBtn = document.getElementById('minimizeBtn');
         if (minimizeBtn) {
             minimizeBtn.addEventListener('click', () => {
-                const logArea = this._getElement(this.options.logAreaId);
-                if (logArea) {
-                    logArea.classList.toggle('h-64');
-                    logArea.classList.toggle('h-32');
+                const wrapper = document.getElementById('debugContentWrapper');
+                if (wrapper) {
+                    wrapper.classList.toggle('h-64');
+                    wrapper.classList.toggle('h-32');
                 }
             });
         }
@@ -549,6 +709,12 @@ class DebugLogger {
             });
         }
 
+        // ปุ่ม Clear All Storage
+        const clearStorageBtn = document.getElementById('clearAllStorageBtn');
+        if (clearStorageBtn) {
+            clearStorageBtn.addEventListener('click', () => this.clearAllStorage());
+        }
+
         // Type filter buttons
         const typeButtons = document.querySelectorAll('.filter-type-btn');
         typeButtons.forEach(btn => {
@@ -577,6 +743,16 @@ class DebugLogger {
             moduleSelect.addEventListener('change', (e) => {
                 this.setModuleFilter(e.target.value);
             });
+        }
+
+        // Tab buttons
+        const logsTab = document.getElementById('logsTabBtn');
+        const versionsTab = document.getElementById('versionsTabBtn');
+        if (logsTab) {
+            logsTab.addEventListener('click', () => this.showLogsTab());
+        }
+        if (versionsTab) {
+            versionsTab.addEventListener('click', () => this.showVersionsTab());
         }
     }
 
@@ -627,6 +803,16 @@ class DebugLogger {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    // ========== NEW METHOD: Clear all localStorage ==========
+    clearAllStorage() {
+        if (confirm('⚠️ Are you sure you want to clear ALL localStorage data? This action cannot be undone.')) {
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => localStorage.removeItem(key));
+            this.log(`All localStorage data cleared (${keys.length} items removed)`, 'system');
+            alert('All localStorage has been cleared.');
+        }
     }
 
     // Convenience methods (without module)

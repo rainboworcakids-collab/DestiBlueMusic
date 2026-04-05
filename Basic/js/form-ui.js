@@ -1,13 +1,53 @@
-// form-ui.js v2.9.4 - [CLEAN] ลบการสร้าง dropdown อัตโนมัติ ให้ HTML จัดการเอง
-// หน้าที่: จัดการ UI ของ FORM 1 (ข้อมูลบุคคล), modal, localStorage, และส่ง event ไปยัง modules อื่น
-//
-// แก้ไขจาก v2.9.3:
-//   - ลบฟังก์ชัน _ensureStyleDropdowns() และการเรียกใช้ออก
-//   - คงไว้เพียงการ map elements ที่มีอยู่แล้ว (musicStyle, musicStyleCustom)
-//   - เพิ่ม warning ถ้าไม่พบ element เพื่อให้ผู้ใช้ตรวจสอบ HTML
-//   - ไม่มีการสร้าง DOM เพิ่มเติมใน JavaScript
+// form-ui.js v2.9.5 - [IMPROVED] รองรับ fullName แสดงเสมอ, birthDate รูปแบบ DD/MM/YYYY (text input)
+// แก้ไขจาก v2.9.4:
+//   - แก้ไข updateFieldVisibility ให้ fullName แสดงเสมอ (fullName: true)
+//   - เพิ่ม Helper: toYYYYMMDD() และ toDDMMYYYY() สำหรับแปลงวันที่
+//   - ปรับ collectFormData() แปลง birthDate จาก DD/MM/YYYY → YYYY-MM-DD ก่อนเก็บ
+//   - ปรับ populateFormWithData() แปลง birthDate จาก YYYY-MM-DD → DD/MM/YYYY ก่อนแสดง
+//   - ปรับ validateFormWithDataContract() รองรับรูปแบบ DD/MM/YYYY และ YYYY-MM-DD
+//   - ปรับ validateSingleField() สำหรับ birthDate ให้แปลงเป็น ISO ก่อนตรวจสอบวันในอนาคต
+//   - ยังคง compatibility กับ input type="date" (YYYY-MM-DD) และ type="text" (DD/MM/YYYY)
 
-window.console.log("[FormUI] FORM-UI.JS v2.9.4 - CLEAN VERSION, HTML only...");
+window.FormUI_VERSION = "2.9.5";
+
+window.console.log("[FormUI] FORM-UI.JS v" + window.FormUI_VERSION + " - FullName always visible, birthDate DD/MM/YYYY support");
+
+// ========== 0. HELPER FUNCTIONS FOR DATE CONVERSION ==========
+/**
+ * แปลงวันที่จากรูปแบบ DD/MM/YYYY → YYYY-MM-DD
+ * @param {string} dateStr - วันที่ในรูปแบบ DD/MM/YYYY หรือ YYYY-MM-DD
+ * @returns {string} วันที่ในรูปแบบ YYYY-MM-DD หรือค่าว่างถ้าไม่ถูกต้อง
+ */
+function toYYYYMMDD(dateStr) {
+    if (!dateStr) return '';
+    // ถ้าเป็น YYYY-MM-DD อยู่แล้ว คืนค่าเดิม
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // ถ้าเป็น DD/MM/YYYY
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+        let [day, month, year] = parts;
+        if (day && month && year && day.length === 2 && month.length === 2 && year.length === 4) {
+            return `${year}-${month}-${day}`;
+        }
+    }
+    return ''; // รูปแบบไม่ถูกต้อง
+}
+
+/**
+ * แปลงวันที่จากรูปแบบ YYYY-MM-DD → DD/MM/YYYY
+ * @param {string} dateStr - วันที่ในรูปแบบ YYYY-MM-DD
+ * @returns {string} วันที่ในรูปแบบ DD/MM/YYYY หรือค่าว่างถ้าไม่ถูกต้อง
+ */
+function toDDMMYYYY(dateStr) {
+    if (!dateStr) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+    }
+    // ถ้าเป็น DD/MM/YYYY อยู่แล้ว คืนค่าเดิม (เผื่อกรณี)
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+    return '';
+}
 
 // ========== 1. DEPENDENCY CHECK ==========
 if (typeof window.DataContract === 'undefined') {
@@ -31,7 +71,6 @@ const APPROVED_FUNCTIONS_FrmUI = {
     collectFormData: true,
     validateFormWithDataContract: true,
     formatDataForEdgeFunction: true,
-    updateUIFromState: true,
     updateFieldVisibility: true,
     updateUserInfoDisplay: true,
     handleGenerateMusic: true,
@@ -89,13 +128,13 @@ class FormUIController {
         ];
 
         this.unsubscribeMusicCurrent = null;
-        console.log("[FormUI] ✅ FormUIController v2.9.4 initialized");
+        console.log("[FormUI] ✅ FormUIController v" + window.FormUI_VERSION + " initialized");
     }
 
     // ========== 4. INITIALIZATION ==========
     initialize() {
         verifyFunctionApproval('initialize');
-        console.log("[FormUI] 🚀 Initializing Form UI v2.9.4...");
+        console.log("[FormUI] 🚀 Initializing Form UI v" + window.FormUI_VERSION + "...");
         try {
             console.log("[FormUI] Step 1: mapElements");
             this.mapElements();
@@ -103,11 +142,9 @@ class FormUIController {
             this.loadSavedData();
             console.log("[FormUI] Step 3: setupEventListeners");
             this.setupEventListeners();
-            console.log("[FormUI] Step 4: updateUIFromState");
-            this.updateUIFromState();
-            console.log("[FormUI] Step 5: setupAppMainIntegration");
+            console.log("[FormUI] Step 4: setupAppMainIntegration");
             this.setupAppMainIntegration();
-            console.log("[FormUI] ✅ Form UI v2.9.4 initialized successfully");
+            console.log("[FormUI] ✅ Form UI v" + window.FormUI_VERSION + " initialized successfully");
         } catch (error) {
             console.error("[FormUI] ❌ initialization failed at step:", error);
             console.error("[FormUI] ❌ Error details:", error);
@@ -117,7 +154,7 @@ class FormUIController {
     }
 
     mapElements() {
-        console.log("[FormUI] 📍 Mapping DOM elements v2.9.4...");
+        console.log("[FormUI] 📍 Mapping DOM elements v" + window.FormUI_VERSION + "...");
         
         this.elements = {
             // Main containers
@@ -209,7 +246,7 @@ class FormUIController {
     // ========== 5. EVENT LISTENERS ==========
     setupEventListeners() {
         verifyFunctionApproval('setupEventListeners');
-        console.log("[FormUI] 🔌 Setting up event listeners v2.9.4...");
+        console.log("[FormUI] 🔌 Setting up event listeners v" + window.FormUI_VERSION + "...");
 
         if (this.elements.form) {
             this.elements.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
@@ -231,7 +268,6 @@ class FormUIController {
         this.setupOptionListeners();
         this.setupInputValidationListeners();
 
-        window.addEventListener('stateUpdated', (event) => this.updateUIFromState(event.detail));
         window.addEventListener('showToast', (event) => this.showToast(event.detail.message, event.detail.type));
 
         window.addEventListener('stateChanged', (e) => {
@@ -321,9 +357,6 @@ class FormUIController {
         console.log("[FormUI] 🔗 Setting up AppMain integration...");
         if (typeof window.AppMainController !== 'undefined') {
             const initialState = window.AppMainController.getState();
-            if (initialState) {
-                this.updateUIFromState(initialState);
-            }
         }
     }
 
@@ -331,7 +364,7 @@ class FormUIController {
     handleFormSubmit(event) {
         verifyFunctionApproval('handleFormSubmit');
         event.preventDefault();
-        console.log("[FormUI] 📝 Handling form submission v2.9.4...");
+        console.log("[FormUI] 📝 Handling form submission v" + window.FormUI_VERSION + "...");
         try {
             const formData = this.collectFormData();
             const validation = this.validateFormWithDataContract(formData);
@@ -353,6 +386,7 @@ class FormUIController {
             this.dispatchFormSubmitted(formData);
             this.hideForm();
             this.showToast('บันทึกข้อมูลสำเร็จ!', 'success');
+
         } catch (error) {
             console.error("[FormUI] ❌ Form submission error:", error);
             this.showError(`เกิดข้อผิดพลาด: ${error.message}`);
@@ -361,18 +395,23 @@ class FormUIController {
 
     collectFormData() {
         verifyFunctionApproval('collectFormData');
-        console.log("[FormUI] 📋 Collecting form data v2.9.4...");
+        console.log("[FormUI] 📋 Collecting form data v" + window.FormUI_VERSION + "...");
         const optionInput = document.querySelector('input[name="calculationOption"]:checked');
         if (!optionInput) throw new Error('กรุณาเลือกวิธีการคำนวณตัวเลข');
         const option = optionInput.value;
 
         const fullName  = this.elements.fullName?.value?.trim() || '';
-        const birthDate = this.elements.birthDate?.value || '';
+        let rawBirthDate = this.elements.birthDate?.value || '';
         const birthTime = this.elements.birthTime?.value || '12:00';
         const id_card   = this.elements.id_card?.value?.replace(/\D/g, '') || '';
 
+        // แปลง birthDate จาก DD/MM/YYYY (หรือรูปแบบอื่น) เป็น YYYY-MM-DD สำหรับเก็บใน state/localStorage
+        let birthDate = toYYYYMMDD(rawBirthDate);
+        // ถ้าแปลงไม่ได้ (เช่น user กรอกผิด หรือใช้ type="date" ที่ให้ค่า YYYY-MM-DD อยู่แล้ว) ให้ใช้ค่าดั้งเดิม
+        if (!birthDate && rawBirthDate) birthDate = rawBirthDate;
+
         console.log("[FormUI] fullName:", fullName);
-        console.log("[FormUI] birthDate:", birthDate);
+        console.log("[FormUI] birthDate (raw):", rawBirthDate, "→ converted:", birthDate);
         console.log("[FormUI] birthTime:", birthTime);
         console.log("[FormUI] id_card:", id_card);
 
@@ -400,7 +439,7 @@ class FormUIController {
 
     validateFormWithDataContract(formData) {
         verifyFunctionApproval('validateFormWithDataContract');
-        console.log("[FormUI] 🔍 Validating with DataContract v2.9.4...");
+        console.log("[FormUI] 🔍 Validating with DataContract v" + window.FormUI_VERSION + "...");
         const errors = [];
         try {
             window.DataContract.validateInput(formData, 'form-ui');
@@ -417,8 +456,13 @@ class FormUIController {
         if (option.includes('IDC') && !personalData.id_card) {
             errors.push('กรุณากรอกเลขบัตรประชาชน');
         }
-        if (personalData.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(personalData.birthDate)) {
-            errors.push('รูปแบบวันเกิดต้องเป็น "YYYY-MM-DD"');
+        // ตรวจสอบ birthDate: ต้องเป็น YYYY-MM-DD หรือ DD/MM/YYYY (เราจะแปลงเป็น YYYY-MM-DD แล้ว แต่เผื่อไว้)
+        if (personalData.birthDate) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(personalData.birthDate) && !/^\d{2}\/\d{2}\/\d{4}$/.test(personalData.birthDate)) {
+                errors.push('รูปแบบวันเกิดต้องเป็น "YYYY-MM-DD" หรือ "DD/MM/YYYY"');
+            }
+        } else {
+            errors.push('กรุณากรอกวันเกิด');
         }
         if (personalData.birthTime && !/^\d{2}:\d{2}$/.test(personalData.birthTime)) {
             errors.push('รูปแบบเวลาต้องเป็น "HH:MM"');
@@ -454,7 +498,13 @@ class FormUIController {
             },
             birthDate: () => {
                 if (!value) return 'กรุณาเลือกวันเกิด';
-                const date = new Date(value);
+                // แปลง DD/MM/YYYY หรือ YYYY-MM-DD เป็น Date object
+                let isoDate = value;
+                if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+                    isoDate = toYYYYMMDD(value);
+                }
+                const date = new Date(isoDate);
+                if (isNaN(date.getTime())) return 'รูปแบบวันเกิดไม่ถูกต้อง (ใช้ DD/MM/YYYY หรือ YYYY-MM-DD)';
                 if (date > new Date()) return 'วันเกิดต้องไม่เป็นวันที่ในอนาคต';
                 return null;
             },
@@ -495,9 +545,10 @@ class FormUIController {
 
     updateFieldVisibility(option) {
         verifyFunctionApproval('updateFieldVisibility');
+        // ให้ fullName แสดงเสมอ โดยไม่ขึ้นกับ option
         const fields = {
-            fullName:  option === 'FullName'  || option === 'BD-IDC-FullName',
-            id_card:   option === 'IDC'       || option === 'BD-IDC-FullName'
+            fullName: true,   // เปลี่ยนแปลง: แสดงเสมอ
+            id_card:   option === 'IDC' || option === 'BD-IDC-FullName'
         };
         Object.keys(fields).forEach(fieldId => {
             const input = this.elements[fieldId];
@@ -522,15 +573,6 @@ class FormUIController {
     }
 
     // ========== 8. UI UPDATES ==========
-    updateUIFromState(state = null) {
-        verifyFunctionApproval('updateUIFromState');
-        console.log("[FormUI] 🔄 Updating UI from state v2.9.4...");
-        if (!state && window.AppMainController) state = window.AppMainController.getState();
-        if (!state) return;
-        if (state.user) this.updateUserInfoDisplay(state.user);
-        this.updateStorageStatus();
-    }
-
     updateUserInfoDisplay(userData) {
         verifyFunctionApproval('updateUserInfoDisplay');
         if (!userData?.personalData) return;
@@ -539,7 +581,9 @@ class FormUIController {
             this.elements.currentUserName.textContent = fullName || '-';
         }
         if (this.elements.currentUserBirth && birthDate) {
-            this.elements.currentUserBirth.textContent = birthDate || '-';
+            // แสดง birthDate ในรูปแบบ DD/MM/YYYY หากเป็น YYYY-MM-DD
+            const displayDate = toDDMMYYYY(birthDate) || birthDate;
+            this.elements.currentUserBirth.textContent = displayDate || '-';
         }
     }
 
@@ -662,7 +706,11 @@ class FormUIController {
         if (formData.personalData) {
             const { fullName, birthDate, birthTime, id_card } = formData.personalData;
             if (this.elements.fullName  && fullName)  this.elements.fullName.value  = fullName;
-            if (this.elements.birthDate && birthDate) this.elements.birthDate.value = birthDate;
+            // แปลง birthDate จาก YYYY-MM-DD (ที่เก็บใน localStorage) เป็น DD/MM/YYYY ก่อนแสดง
+            if (this.elements.birthDate && birthDate) {
+                const displayDate = toDDMMYYYY(birthDate) || birthDate;
+                this.elements.birthDate.value = displayDate;
+            }
             if (this.elements.birthTime && birthTime) this.elements.birthTime.value = birthTime;
             if (this.elements.id_card   && id_card)   this.elements.id_card.value   = id_card;
         }
@@ -832,7 +880,7 @@ class FormUIController {
 
     cleanup() {
         verifyFunctionApproval('cleanup');
-        console.log("[FormUI] 🧹 Cleaning up Form UI v2.9.4...");
+        console.log("[FormUI] 🧹 Cleaning up Form UI v" + window.FormUI_VERSION + "...");
         if (this.unsubscribeMusicCurrent) {
             this.unsubscribeMusicCurrent();
             this.unsubscribeMusicCurrent = null;
@@ -844,7 +892,7 @@ class FormUIController {
 
     getStatus() {
         return {
-            version: '2.9.4',
+            version: '2.9.5',
             state: this.state,
             localStorage: {
                 userData:      !!localStorage.getItem(this.localStorageKeys.userData),
@@ -868,7 +916,6 @@ window.FormUIController = {
     saveFormData:     (formData) => window.FormUI.saveToLocalStorage('userData', formData),
     loadFormData:     () => window.FormUI.loadFromLocalStorage('userData'),
     clearAllData:     () => window.FormUI.clearLocalStorage(),
-    updateUIFromState:(state) => window.FormUI.updateUIFromState(state),
     generateMusic:    () => window.FormUI.handleGenerateMusic(),
     resetToDefault:   () => window.FormUI.handleResetToDefault(),
     showLoading:      (message) => window.FormUI.showLoading(message),
@@ -879,7 +926,7 @@ window.FormUIController = {
 
 // ========== 17. AUTO-INITIALIZE ==========
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("[FormUI] 📄 DOM Content Loaded - Starting Form UI v2.9.4...");
+    console.log("[FormUI] 📄 DOM Content Loaded - Starting Form UI v" + window.FormUI_VERSION + "..");
     setTimeout(() => {
         try {
             if (typeof window.DataContract === 'undefined') {
@@ -887,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             window.FormUIController.initialize();
-            console.log("[FormUI] 🎉 Form UI v2.9.4 ready!");
+            console.log("[FormUI] 🎉 Form UI v" + window.FormUI_VERSION + " ready!");
         } catch (error) {
             console.error("[FormUI] ❌ initialization failed:", error);
             const loadingScreen = document.getElementById('loadingScreen');
@@ -906,7 +953,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 300);
 });
 
-console.log("[FormUI] ✅ FORM-UI.JS v2.9.4 LOADED");
+console.log("[FormUI] ✅ FORM-UI.JS v" + window.FormUI_VERSION + " LOADED");
 console.log("[FormUI] 📋 FORM-UI Approved Functions:", Object.keys(APPROVED_FUNCTIONS_FrmUI));
 console.log("[FormUI] 🔗 DataContract available:", typeof window.DataContract !== 'undefined');
 console.log("[FormUI] 🔗 AppMain available:", typeof window.AppMainController !== 'undefined');

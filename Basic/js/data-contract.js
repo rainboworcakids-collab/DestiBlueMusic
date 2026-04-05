@@ -3,6 +3,8 @@
 // 🛡️ ห้ามเพิ่ม Function นอกเหนือจากที่ระบุในแผนนี้ (กฎเหล็กข้อ 0)
 // 🔄 เวอร์ชัน 2.1 (อัปเดตตาม Master Workflow v1.3)
 
+window.DataContract_VERSION = "2.1";
+
 class DataContract {
   constructor() {
     this.schemas = {
@@ -186,6 +188,8 @@ class DataContract {
             LifeLessonNumber: { type: 'number', required: true },
             
             // 🔮 สำหรับ prophesy === "1"
+            LifePathLucky: { type: 'string', required: false },  
+            
             PersonalYearNumber: { type: 'number', required: false },
             PersonalYearElement: { type: 'string', required: false },
             PersonalYearEnergy: { type: 'string', required: false },
@@ -686,7 +690,6 @@ if (typeof window !== 'undefined') {
         'ไม้': 'wood', 'ไฟ': 'fire', 'ดิน': 'earth', 'ทอง': 'metal', 'โลหะ': 'metal', 'น้ำ': 'water',
         'wood': 'wood', 'fire': 'fire', 'earth': 'earth', 'metal': 'metal', 'water': 'water'
       },
-
      ELEMENT_CAPITALIZE: {
         'wood': 'Wood', 'fire': 'Fire', 'earth': 'Earth', 'metal': 'Metal', 'water': 'Water'
       },
@@ -740,6 +743,6 @@ if (typeof window !== 'undefined') {
 }
 
 // แสดง version เมื่อโหลด
-window.console.log("✅ data-contract.js v2.1 loaded ");
+window.console.log("✅ data-contract.js v"  + window.DataContract_VERSION  + " loaded ");
 
 // 🛑 ห้ามเพิ่ม Function อื่นนอกเหนือจากนี้ (กฎเหล็กข้อ 0)

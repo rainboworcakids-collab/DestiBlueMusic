@@ -1,13 +1,15 @@
-// storytelling-engin.js v1.2 (Beta+1)
+// storytelling-engin.js v1.3 (Phase 1 — Storytelling Trigger)
 // หน้าที่: สร้างเรื่องราวจาก numerologyContext และ musicPreferences สำหรับแสดงใน UI
-// แก้ไขตามแผน v1.3 เฟส 7:
-//   - ปรับ export ให้เป็น object ที่มี generateStory (G8)
-//   - เพิ่ม listener musicPointerChanged เพื่อ re-generate story และ dispatch storyGenerated (P3)
-//   - เพิ่ม comment placeholder สำหรับ story-templates (F3)
-//   - เพิ่ม APPROVED_FUNCTIONS และ verifyFunctionApproval
-//   - ตรวจสอบ dependencies ก่อนทำงาน
+// Phase 1 Changes:
+//   - เปลี่ยน trigger จาก musicPointerChanged → storyContextReady (dispatch ครั้งเดียวต่อ session)
+//   - เพิ่ม dispatch storyFetching ก่อน generate (รองรับ loading state ใน UI)
+//   - เพิ่ม error handling + dispatch storyError พร้อม fallbackStory
+//   - เพิ่ม _fetchStoryFromSupabase() stub สำหรับ Phase 2
+//   - storyGenerated payload เพิ่ม sessionId และ source field
 
-console.log("[StorytellingEngine] 🔧 Module version v1.2 - INITIALIZING...");
+window.StorytellingEngine_VERSION = '1.3';
+
+console.log("[StorytellingEngine] 🔧 Module version v' + window.StorytellingEngine_VERSION +' - INITIALIZING...");
 
 // ========== 1. APPROVED FUNCTIONS ==========
 const APPROVED_FUNCTIONS_Storytelling = {
@@ -19,7 +21,8 @@ const APPROVED_FUNCTIONS_Storytelling = {
     _buildSpark: true,
     _buildAtmosphere: true,
     _buildNote: true,
-    // ฟังก์ชัน legacy (buildNumerologyToMusicStory, createXXXChapter) อาจไม่จำเป็นต้อง verify
+    _fetchStoryFromSupabase: true,  // Phase 2 stub
+    _buildMusicPrefsFromDNA: true,  // Phase 1 helper
 };
 
 function verifyFunctionApproval(functionName) {
@@ -32,7 +35,7 @@ function verifyFunctionApproval(functionName) {
 class StorytellingEngine {
     constructor() {
         verifyFunctionApproval('constructor');
-        console.log("[StorytellingEngine] ✅ v1.2 initialized");
+        console.log("[StorytellingEngine] ✅   v' + window.StorytellingEngine_VERSION +' initialized (Phase 1 Storytelling Trigger)");
         this.setupEventListeners();
     }
 
@@ -150,69 +153,109 @@ class StorytellingEngine {
         return `หมายเหตุ: อิทธิพลจาก ${noteParts.join(' และ ')} ทำให้เพลงมีความลึกซึ้งมากยิ่งขึ้น`;
     }
 
-    // ========== EVENT LISTENERS (P3) ==========
+    // ========== EVENT LISTENERS — Phase 1 ==========
+    // เปลี่ยนจาก musicPointerChanged → storyContextReady
+    // musicPointerChanged dispatch หลายครั้งต่อ session (ทุกครั้งสลับ style)
+    // storyContextReady dispatch ครั้งเดียวต่อ session จาก form-psychomatrix
     setupEventListeners() {
         verifyFunctionApproval('setupEventListeners');
-        console.log("[StorytellingEngine] 🔌 Setting up event listeners");
+        console.log("[StorytellingEngine] 🔌 Setting up event listeners (Phase 1)");
 
-        // ✅ ฟัง event musicPointerChanged เพื่อ re-generate story
-        window.addEventListener('musicPointerChanged', (e) => {
-            const { activeDNA } = e.detail || {};
-            if (!activeDNA) {
-                console.log("[StorytellingEngine] ⚠️ musicPointerChanged without activeDNA");
+        // ✅ Phase 1: ฟัง storyContextReady แทน musicPointerChanged
+        window.addEventListener('storyContextReady', async (e) => {
+            const { sessionId, numerologyContext, musicPrefs,
+                    combinedDNA, supabaseEnabled } = e.detail || {};
+
+            if (!numerologyContext) {
+                console.warn("[StorytellingEngine] storyContextReady missing numerologyContext — skip");
                 return;
             }
 
-            // ตรวจสอบ dependencies
-            if (!window.AppMainController) {
-                console.warn("[StorytellingEngine] AppMainController not available, cannot re-generate story");
-                return;
-            }
-            if (!window.DataContractConstants) {
-                console.warn("[StorytellingEngine] DataContractConstants not available");
-                return;
-            }
+            console.log("[StorytellingEngine] 📖 storyContextReady received, sessionId:", sessionId,
+                        "supabaseEnabled:", supabaseEnabled);
 
-            // ดึง numerologyContext จาก AppMain
-            const numerologyCtx = window.AppMainController.getState('numerology');
-            if (!numerologyCtx) {
-                console.warn("[StorytellingEngine] No numerology context in AppMain, skipping story re-gen");
-                return;
-            }
-
-            // ✅ [FIX] สร้าง musicPrefs จาก activeDNA ทั้ง config + instruments/effects
-            // activeDNA.config มีแค่ root/scale/bpm/element/mode — ไม่มี style/mood/intensity/instruments
-            const cfg = activeDNA.config || {};
-            const musicPrefs = {
-                style:        cfg.style       || activeDNA.style       || 'lofi',
-                tempo:        cfg.bpm         || activeDNA.tempo       || 85,
-                mood:         cfg.mode        || activeDNA.mood        || 'calm',
-                intensity:    cfg.intensity   || activeDNA.intensity   || 'medium',
-                instruments:  activeDNA.instruments  || cfg.instruments  || ['piano'],
-                effects:      activeDNA.effects      || cfg.effects      || [],
-                natureEffects:activeDNA.natureEffects || cfg.natureEffects || []
-            };
-
-            if (!musicPrefs.style) {
-                console.warn("[StorytellingEngine] activeDNA missing config.style, using 'lofi' default");
-                musicPrefs.style = 'lofi';
-            }
+            // ── dispatch storyFetching ให้ UI แสดง loading state ──
+            window.dispatchEvent(new CustomEvent('storyFetching', {
+                detail: { sessionId, source: supabaseEnabled ? 'supabase' : 'local' },
+                bubbles: true
+            }));
 
             try {
-                const newStory = this.generateStory(numerologyCtx, musicPrefs);
-                // dispatch event storyGenerated
+                let story;
+
+                if (supabaseEnabled) {
+                    // Phase 2+: fetch จาก Supabase
+                    story = await this._fetchStoryFromSupabase(sessionId, numerologyContext);
+                } else {
+                    // Phase 1: generate จาก local template
+                    // musicPrefs อาจมีครบจาก payload แล้ว ถ้าไม่มีให้ build จาก combinedDNA
+                    const prefs = musicPrefs || this._buildMusicPrefsFromDNA(combinedDNA?.defaultDNA);
+                    story = this.generateStory(numerologyContext, prefs);
+                }
+
                 window.dispatchEvent(new CustomEvent('storyGenerated', {
-                    detail: { story: newStory, source: 'musicPointerChanged' },
+                    detail: {
+                        story,
+                        sessionId,
+                        source:  supabaseEnabled ? 'supabase' : 'local',
+                        storyId: story.id ?? null,
+                    },
                     bubbles: true
                 }));
-                console.log("[StorytellingEngine] ✅ Story re-generated from musicPointerChanged");
+                console.log("[StorytellingEngine] ✅ Story generated (source: local), sessionId:", sessionId);
+
             } catch (error) {
-                console.error("[StorytellingEngine] ❌ Failed to re-generate story:", error.message);
-                // ไม่ fallback ตามกฎ
+                console.error("[StorytellingEngine] ❌ Story generation failed:", error.message);
+
+                // fallback: generate local แม้ Supabase fail
+                let fallbackStory = null;
+                try {
+                    const prefs = musicPrefs || this._buildMusicPrefsFromDNA(combinedDNA?.defaultDNA);
+                    fallbackStory = this.generateStory(numerologyContext, prefs);
+                } catch (fbErr) {
+                    console.error("[StorytellingEngine] ❌ Fallback story also failed:", fbErr.message);
+                }
+
+                window.dispatchEvent(new CustomEvent('storyError', {
+                    detail: { sessionId, error: error.message, fallbackStory },
+                    bubbles: true
+                }));
             }
         });
 
-        console.log("[StorytellingEngine] ✅ Event listeners setup complete");
+        console.log("[StorytellingEngine] ✅ Event listeners setup complete (Phase 1)");
+    }
+
+    // ─── Phase 2 stub ─────────────────────────────────────────────
+    // ใน Phase 2 implement จริง: fetch story จาก Supabase by sessionId
+    // ถ้าไม่พบ → ค้นหา template ที่ match lifePath+element+style
+    async _fetchStoryFromSupabase(sessionId, numerologyContext) {
+        verifyFunctionApproval('_fetchStoryFromSupabase');
+        // TODO Phase 2:
+        // const { data } = await supabase
+        //   .from('stories')
+        //   .select('*')
+        //   .eq('session_id', sessionId)
+        //   .single();
+        // if (data) return data;
+        // return this._matchTemplate(numerologyContext);
+        throw new Error('Supabase not enabled in this edition (Phase 1)');
+    }
+
+    // ─── Helper: build musicPrefs จาก DNA object ─────────────────
+    _buildMusicPrefsFromDNA(dna) {
+        verifyFunctionApproval('_buildMusicPrefsFromDNA');
+        if (!dna) return { style: 'lofi', tempo: 85, mood: 'calm', intensity: 'medium', instruments: ['piano'], effects: [], natureEffects: [] };
+        const cfg = dna.config || {};
+        return {
+            style:        cfg.style        || dna.style        || 'lofi',
+            tempo:        cfg.bpm          || dna.tempo        || 85,
+            mood:         cfg.mode         || dna.mood         || 'calm',
+            intensity:    cfg.intensity    || dna.intensity    || 'medium',
+            instruments:  dna.instruments  || cfg.instruments  || ['piano'],
+            effects:      dna.effects      || cfg.effects      || [],
+            natureEffects:dna.natureEffects|| cfg.natureEffects|| [],
+        };
     }
 
     // ========== ฟังก์ชันเดิมที่ปรับปรุงให้รับ numerologyContext (ไม่ใช้ birthDate) ==========
@@ -575,9 +618,10 @@ class StorytellingEngine {
 // ========== 3. CREATE INSTANCE AND EXPORT ==========
 const instance = new StorytellingEngine();
 
-// ✅ Export ตามแผน (G8)
+// ✅ Export ตามแผน (G8) — Phase 1 เพิ่ม generateStory + _buildMusicPrefsFromDNA
 window.StorytellingEngine = {
-    generateStory: (numerologyContext, musicPreferences) => instance.generateStory(numerologyContext, musicPreferences)
+    generateStory:          (numerologyContext, musicPreferences) => instance.generateStory(numerologyContext, musicPreferences),
+    _buildMusicPrefsFromDNA:(dna)                                 => instance._buildMusicPrefsFromDNA(dna),
 };
 
 // ========== 4. PLACEHOLDER FOR STORY-TEMPLATES (F3) ==========
@@ -587,4 +631,4 @@ window.StorytellingEngine = {
 // const musicStyleStories = window.MusicStyleStories;
 // const numberFrequencyStories = window.NumberFrequencyStories;
 
-console.log("[StorytellingEngine] ✅ v1.2 loaded and exported");
+console.log("[StorytellingEngine] ✅  v' + window.StorytellingEngine_VERSION +' loaded and exported (Phase 1 Storytelling Trigger)");
