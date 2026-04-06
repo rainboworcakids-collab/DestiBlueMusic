@@ -82,8 +82,35 @@
             cursor: pointer;
         }
 
+        #playButton {
+            /* ปรับขนาดให้เล็กลงพอดีกับแถวบน (Mobile Responsive) */
+            width: 60px !important; 
+            height: 60px !important;
+            
+            /* สำหรับมือถือแนวตั้งที่จอแคบ */
+            @media (max-width: 480px) {
+                width: 50px !important;
+                height: 50px !important;
+            }
+        
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            pointer-events: auto !important; /* ให้ปุ่มกดได้ปกติ */
+            display: inline-flex !important; /* จัดกลางในแนวนอน */
+            align-items: center !important;
+            justify-content: center !important;
+            border: 3px solid white !important;
+            background-image: background: -webkit-linear-gradient(top left, #6366f1 0%, #4338ca 100%) !important;
+            background-image: background: -moz-linear-gradient(top left, #6366f1 0%, #4338ca 100%) !important;
+            background-image: background: -o-linear-gradient(top left, #6366f1 0%, #4338ca 100%) !important;
+            background-image: background: linear-gradient(to bottom right, #6366f1 0%, #4338ca 100%) !important;    
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+            color: white !important;
+            transition: all 0.2s ease !important;
+        }
+
         #playButton:hover {
-            transform: translateY(-2px);
+            transform: scale(1.1);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             background-image: background: -webkit-linear-gradient(top left, #fb923c 0%, #ea580c 100%);
             background-image: background: -moz-linear-gradient(top left, #fb923c 0%, #ea580c 100%);
@@ -91,9 +118,23 @@
             background-image: background: linear-gradient(to bottom right, #fb923c 0%, #ea580c 100%);    
         }
 
+        /* ปรับขนาด Icon ข้างในตามขนาดปุ่ม */
         #playButton i {
-            margin-right: 6px;
-            font-size: 1rem;
+            font-size: 1.8rem !important;
+        }
+
+        #playBttn {
+            position: fixed !important;
+            top: 0 !important;         /* ย้ายไปบนสุดของจอ (y = 0) */
+            left: 50% !important;
+            width: 100% !important;    /* ให้ Container แผ่เต็มความกว้างเพื่อจัดกลางปุ่มภายใน */
+            height: auto !important;
+            z-index: 2147483647 !important; 
+            margin: 0 !important;
+            padding: 10px 0 !important; /* เว้นระยะจากขอบบนเล็กน้อยเพื่อความสวยงาม */
+            display: none;             /* ซ่อนไว้ก่อนจนกว่าจะ Submit */
+            pointer-events: none !important; /* เพื่อให้ยังกดสิ่งที่อยู่ข้างล่างปุ่มได้ถ้าจำเป็น */
+            text-align: center !important;
         }
 
         /* แก้ไข: ให้วันเกิดและเวลาเกิดอยู่บรรทัดเดียวกันเสมอ (ยกเว้นจอเล็กมาก) */
@@ -149,6 +190,14 @@
     </style>
 </head>
 <body>
+    
+    <div id="playBttn">
+      <button id="playButton">
+        <i class="fa-solid fa-headphones"></i>
+      </button>
+    </div>
+
+    
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-spinner"></div>
@@ -215,7 +264,7 @@
                         </label>
                 </div>
             </div>
-                
+            
             <!-- Personal Form Fields -->
             <form id="musicForm" class="form">
                 <!-- ชื่อ-สกุล (ชื่อเล่น) -->
@@ -286,15 +335,8 @@
             </form>
         </div>
 
-        <div id="playBttn"  class="mt-6 text-center">
-            <button id="playButton" class="mt-5 bg-rose-50 hover:bg-rose-100 text-rose-700 px-6 py-2 rounded-full text-sm font-medium flex items-center gap-2 mx-auto transition shadow-sm border border-rose-200">
-                <i class="fa-solid fa-headphones"></i> ฟัง MLQ-Music ตัวอย่าง 
-            </button>
-        </div>
-
-        
         <!-- ส่วนแสดงผลลัพธ์ -->
-        <div id="resultContainer" class="mt-6 hidden animate-fade-slide"></div>
+        <div id="resultContainer" class="mt-1 hidden animate-fade-slide z-10"></div>
     </div>
     
     <!-- Hidden File Input -->
@@ -421,7 +463,7 @@
         const progressHtml = `<div class="mt-4 space-y-2">${skill.skills.map((s, i) => `<div><span class="text-sm font-medium">${s}</span><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full smooth-progress" style="width: ${[38,45,52][i%3]}%"></div></div></div>`).join('')}</div>`;
 
         const html = `
-            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card mt-1 p-5 md:p-6">
                 <div  class="absolute top-4 right-4 w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg flex items-center justify-center transition-all duration-200 z-20" >
                     <button id="editFormBtn" class="btn-primary text-white hover:text-indigo-800 font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
                         <i class="fa-regular fa-pen-to-square text-3xl"></i>
@@ -450,24 +492,37 @@
 
         container.innerHTML = html;
         container.classList.remove('hidden');
-
+        
         // จัดการปุ่มแก้ไขข้อมูล
         const editBtn = document.getElementById('editFormBtn');
         if (editBtn) {
             editBtn.addEventListener('click', () => {
                 const formModal = document.getElementById('formModal');
                 const resultContainer = document.getElementById('resultContainer');
-            
+                const playBtnDiv = document.getElementById('playBttn'); // เพิ่มบรรทัดนี้
+
                 if (formModal && resultContainer) {
-                    formModal.classList.remove('hidden');   // แสดงฟอร์ม
-                    formModal.style.display = 'flex';
-                    formModal.scrollIntoView ({behavior: 'smooth' , block : 'start'});
+                    formModal.classList.remove('hidden');
+                    formModal.style.display = 'block'; // หรือ flex ตามที่คุณตั้งไว้
+            
+                    // --- เพิ่มส่วนนี้เพื่อซ่อนปุ่ม Play ไม่ให้ทับ Form ---
+                    if (playBtnDiv) {
+                        playBtnDiv.style.display = 'none'; 
+                    }
+
+                    formModal.scrollIntoView({behavior: 'smooth', block: 'start'});
                 }
             });
         }
-    }
- 
 
+        // เปลี่ยนจากการสั่ง block หรือ inline-flex เป็นแบบนี้เพื่อความแน่นอน
+        const playBtnDiv = document.getElementById('playBttn');
+        if (playBtnDiv) {
+            playBtnDiv.style.setProperty('display', 'block', 'important');
+        }
+
+    }
+  
     // ฟังก์ชันเล่นเพลงตาม lifePath (ใช้กับ global button)
     function playMusicByLifePath(lp) {
         const audio = document.getElementById('previewAudio');
