@@ -214,92 +214,89 @@
                             </div>
                         </label>
                 </div>
-        </div>
+            </div>
                 
-        <!-- Personal Form Fields -->
-        <form id="musicForm" class="form">
-            <!-- ชื่อ-สกุล (ชื่อเล่น) -->
-            <div id="fullNameContainer" class="form-group" data-options="FullName,BD-IDC-FullName">
-                <label for="fullName" class="form-label">
-                    <i class="fas fa-user mr-1"></i> ชื่อเล่น <span class="text-red-500">*</span>
-                </label>
-                <input 
-                    type="text" 
-                    id="fullName" 
-                    class="form-input"
-                    placeholder="เช่น ชัย"
-                    maxlength="20"
-                >
-            </div>
-                    
-            <!-- บัตรประชาชน -->
-            <div id="idCardContainer" class="form-group" data-options="IDC,BD-IDC-FullName">
-                <label for="id_card" class="form-label">
-                    <i class="fas fa-id-card mr-1"></i> บัตรประชาชน
-                </label>
-                <input 
-                    type="text" 
-                    id="id_card" 
-                    class="form-input"
-                    placeholder="เช่น 1234567890123"
-                    maxlength="13"
-                    pattern="[0-9]{13}"
-                >
-                <div class="form-hint">หากไม่กรอกจะใช้เฉพาะชื่อและวันเกิด</div>
-            </div>
-                    
-            <!-- แก้ไข: ใช้วันเกิดและเวลาเกิดใน grid ที่บังคับให้อยู่บรรทัดเดียวกัน -->
-            <div class="date-time-row">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"><i class="fa-regular fa-calendar mr-1 text-indigo-400"></i> วันเกิด <span class="text-red-500">*</span></label>
-                    <input type="text" id="birthDate" required placeholder="DD/MM/YYYY" 
-                       class="form-input w-full">
-                        <p class="text-xs text-gray-400 mt-1">รูปแบบ วัน/เดือน/ปี ค.ศ. เช่น 28/01/2015</p>
+            <!-- Personal Form Fields -->
+            <form id="musicForm" class="form">
+                <!-- ชื่อ-สกุล (ชื่อเล่น) -->
+                <div id="fullNameContainer" class="form-group" data-options="FullName,BD-IDC-FullName">
+                    <label for="fullName" class="form-label">
+                        <i class="fas fa-user mr-1"></i> ชื่อเล่น <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        class="form-input"
+                        placeholder="เช่น ชัย"
+                        maxlength="20"
+                    >
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"><i class="fa-regular fa-clock mr-1 text-indigo-400"></i> เวลาเกิด (โดยประมาณ)</label>
+                    
+                <!-- บัตรประชาชน -->
+                <div id="idCardContainer" class="form-group" data-options="IDC,BD-IDC-FullName">
+                    <label for="id_card" class="form-label">
+                        <i class="fas fa-id-card mr-1"></i> บัตรประชาชน
+                    </label>
+                    <input 
+                        type="text" 
+                        id="id_card" 
+                        class="form-input"
+                        placeholder="เช่น 1234567890123"
+                        maxlength="13"
+                        pattern="[0-9]{13}"
+                    >
+                    <div class="form-hint">หากไม่กรอกจะใช้เฉพาะชื่อและวันเกิด</div>
+                </div>
+                    
+                <!-- แก้ไข: ใช้วันเกิดและเวลาเกิดใน grid ที่บังคับให้อยู่บรรทัดเดียวกัน -->
+                <div class="date-time-row">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1"><i class="fa-regular fa-calendar mr-1 text-indigo-400"></i> วันเกิด <span class="text-red-500">*</span></label>
+                        <input type="text" id="birthDate" required placeholder="DD/MM/YYYY" 
+                            class="form-input w-full">
+                            <p class="text-xs text-gray-400 mt-1">รูปแบบ วัน/เดือน/ปี ค.ศ. เช่น 28/01/2015</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1"><i class="fa-regular fa-clock mr-1 text-indigo-400"></i> เวลาเกิด (โดยประมาณ)</label>
                         <input type="time" id="birthTime" value="6:30" class="form-input w-full">
                         <p class="text-xs text-gray-400 mt-1">ถ้าไม่แน่ใจ ให้ใช้ 6:30 น.(เช้าวันใหม่)</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- แนวเพลง Melody1 และ Melody2 (dropdown) -->
-            <div class="form-group hidden">
-                <label for="musicStyle" class="form-label">🎵 แนวเพลง Melody1</label>
-                <select id="musicStyle" name="musicStyle" class="form-select">
-                    <option value="lofi" selected>🎵 Lo-fi Beats</option>
-                </select>
-            </div>
+                <!-- แนวเพลง Melody1 และ Melody2 (dropdown) -->
+                <div class="form-group hidden">
+                    <label for="musicStyle" class="form-label">🎵 แนวเพลง Melody1</label>
+                    <select id="musicStyle" name="musicStyle" class="form-select">
+                        <option value="lofi" selected>🎵 Lo-fi Beats</option>
+                    </select>
+                </div>
                     
-            <div class="form-group hidden">
-                <label for="musicStyleCustom" class="form-label">🎨 แนวเพลง Melody2</label>
-                <select id="musicStyleCustom" name="musicStyleCustom" class="form-select">
-                    <option value="relax" selected>🧘 Relax / Meditation</option>
-                </select>
-            </div>
+                <div class="form-group hidden">
+                    <label for="musicStyleCustom" class="form-label">🎨 แนวเพลง Melody2</label>
+                    <select id="musicStyleCustom" name="musicStyleCustom" class="form-select">
+                        <option value="relax" selected>🧘 Relax / Meditation</option>
+                    </select>
+                </div>
                     
-            <div class="mt-12 text-center w-full">
-                <button type="submit" id="submitFormBtn" class="btn-primary text-white font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
-                    <i class="fa-regular fa-compass"></i> ดูพิมพ์เขียวของฉัน
-                </button>
-            </div>
-        </form>
-    </div>
+                <div class="mt-12 text-center w-full">
+                    <button type="submit" id="submitFormBtn" class="btn-primary text-white font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-regular fa-compass"></i> ดูพิมพ์เขียวของฉัน
+                    </button>
+                </div>
+            </form>
+        </div>
 
-        <!-- ปุ่มเล่นเพลงตัวอย่าง -->
-        <div id="playBttn" style="display: none;" class="mt-6 text-center">
+        <div id="playBttn"  class="mt-6 text-center">
             <button id="playButton" class="mt-5 bg-rose-50 hover:bg-rose-100 text-rose-700 px-6 py-2 rounded-full text-sm font-medium flex items-center gap-2 mx-auto transition shadow-sm border border-rose-200">
                 <i class="fa-solid fa-headphones"></i> ฟัง MLQ-Music ตัวอย่าง 
             </button>
         </div>
-        
-            <!-- ส่วนแสดงผลลัพธ์ -->
-    <div id="resultContainer" class="mt-6 hidden animate-fade-slide"></div>
-</div>
-    
-    </div>
 
-   
+        
+        <!-- ส่วนแสดงผลลัพธ์ -->
+        <div id="resultContainer" class="mt-6 hidden animate-fade-slide"></div>
+    </div>
+    
     <!-- Hidden File Input -->
     <input type="file" id="musicFileInput" accept=".json" class="hidden">
     
@@ -416,59 +413,60 @@
         });
     }
     
-    // ฟังก์ชันแสดงผลลัพธ์ (เหมือนใน index.html)
-    function displayResult(nickname, destiny, lifePath) {
-        const container = document.getElementById('resultContainer');
-        const skill = getSkillData(lifePath);
-        const strengthsList = skill.strengths.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-circle-check text-green-500 mt-1"></i> <span>${s}</span></li>`).join('');
-        const skillsList = skill.skills.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-arrow-right text-blue-500 mt-1"></i> <span>${s}</span></li>`).join('');
-        const progressHtml = `<div class="mt-4 space-y-2">${skill.skills.map((s, i) => `<div><span class="text-sm font-medium">${s}</span><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full smooth-progress" style="width: ${[38,45,52][i%3]}%"></div></div></div>`).join('')}</div>`;
-        const musicPreviewId = `musicPreviewBtn_${Date.now()}`;
-        const musicUrl = getMusicPreviewUrl(lifePath);
-        
-        const html = `
-            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
-                <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
-                    <div class="flex-1">
-                        <h3 class="text-xl font-bold text-gray-800">✨ พิมพ์เขียวของ <span class="text-gray-200">${escapeHtml(nickname) || 'นักเดินทาง'} </span> <span class="text-indigo-400"> รหัสชีวิต ${lifePath}/${destiny}</span></h3>
-                    </div>
-                    <div id="playButtonAnchor" class="flex-shrink-0"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-star text-amber-500"></i> จุดแข็งทางธรรมชาติ</p>
-                        <ul class="space-y-1">${strengthsList}</ul>
-                    </div>
-                    <div>
-                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-flag-checkered text-emerald-500"></i> ทักษะพัฒนา 90 วันแรก</p>
-                        <ul class="space-y-1">${skillsList}</ul>
-                    </div>
-                </div>
-                ${progressHtml}
-            </div>
-        `;
-        
-        container.innerHTML = html;
-        container.classList.remove('hidden');
+function displayResult(nickname, destiny, lifePath) {
+    const container = document.getElementById('resultContainer');
+    const skill = getSkillData(lifePath);
+    const strengthsList = skill.strengths.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-circle-check text-green-500 mt-1"></i> <span>${s}</span></li>`).join('');
+    const skillsList = skill.skills.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-arrow-right text-blue-500 mt-1"></i> <span>${s}</span></li>`).join('');
+    const progressHtml = `<div class="mt-4 space-y-2">${skill.skills.map((s, i) => `<div><span class="text-sm font-medium">${s}</span><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full smooth-progress" style="width: ${[38,45,52][i%3]}%"></div></div></div>`).join('')}</div>`;
 
-        const playBtnDynamic = document.getElementById('playButton');
-        const anchor = document.getElementById('playButtonAnchor');
-        if (playBtnDynamic && anchor) {
-            anchor.appendChild(playBtnDynamic);
-            playBtnDynamic.style.display = 'inline-flex';
-            playBtnDynamic.style.position = 'relative';
-            playBtnDynamic.style.margin = '0';
-            playBtnDynamic.style.top = 'auto';
-            playBtnDynamic.style.right = 'auto';
-            playBtnDynamic.setAttribute('data-lifepath', lifePath);
-            // ผูก event (ถ้ายังไม่มี)
-            playBtnDynamic.addEventListener('click', (e) => {
-                e.preventDefault();
-                playMusicByLifePath(lifePath);
-            });
-        }
+    const html = `
+        <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
+            <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-gray-800">✨ ${escapeHtml(nickname) || 'นักเดินทาง'} <span class="text-indigo-400"> รหัสชีวิต ${lifePath}/${destiny}</span></h3>
+                </div>
+                <div id="playButtonAnchor" class="flex-shrink-0"></div>
+                
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-star text-amber-500"></i> จุดแข็งทางธรรมชาติ</p>
+                    <ul class="space-y-1">${strengthsList}</ul>
+                </div>
+                <div>
+                    <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-flag-checkered text-emerald-500"></i> ทักษะพัฒนา 90 วันแรก</p>
+                    <ul class="space-y-1">${skillsList}</ul>
+                </div>
+            </div>
+            ${progressHtml}
+            <div class="mt-6 text-center">
+                <button id="editFormBtn" class="btn-primary text-white hover:text-indigo-800 font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
+                    <i class="fa-regular fa-pen-to-square"></i> แก้ไขข้อมูล
+                </button>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+    container.classList.remove('hidden');
+
+    // จัดการปุ่มแก้ไขข้อมูล
+    const editBtn = document.getElementById('editFormBtn');
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            const formModal = document.getElementById('formModal');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            if (formModal && resultContainer) {
+                formModal.classList.remove('hidden');   // แสดงฟอร์ม
+                formModal.style.display = 'flex';
+            }
+        });
     }
-    
+}
+ 
+
     // ฟังก์ชันเล่นเพลงตาม lifePath (ใช้กับ global button)
     function playMusicByLifePath(lp) {
         const audio = document.getElementById('previewAudio');
@@ -515,7 +513,7 @@
         displayResult(fullName, destiny, lifePath);
         
         // เลื่อนไปที่ผลลัพธ์
-        document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         
 
         // แสดงปุ่ม playButton และอัปเดตเพลงตาม lifePath ปัจจุบัน
