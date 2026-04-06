@@ -413,58 +413,59 @@
         });
     }
     
-function displayResult(nickname, destiny, lifePath) {
-    const container = document.getElementById('resultContainer');
-    const skill = getSkillData(lifePath);
-    const strengthsList = skill.strengths.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-circle-check text-green-500 mt-1"></i> <span>${s}</span></li>`).join('');
-    const skillsList = skill.skills.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-arrow-right text-blue-500 mt-1"></i> <span>${s}</span></li>`).join('');
-    const progressHtml = `<div class="mt-4 space-y-2">${skill.skills.map((s, i) => `<div><span class="text-sm font-medium">${s}</span><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full smooth-progress" style="width: ${[38,45,52][i%3]}%"></div></div></div>`).join('')}</div>`;
+    function displayResult(nickname, destiny, lifePath) {
+        const container = document.getElementById('resultContainer');
+        const skill = getSkillData(lifePath);
+        const strengthsList = skill.strengths.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-circle-check text-green-500 mt-1"></i> <span>${s}</span></li>`).join('');
+        const skillsList = skill.skills.map(s => `<li class="flex items-start gap-2"><i class="fa-regular fa-arrow-right text-blue-500 mt-1"></i> <span>${s}</span></li>`).join('');
+        const progressHtml = `<div class="mt-4 space-y-2">${skill.skills.map((s, i) => `<div><span class="text-sm font-medium">${s}</span><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full smooth-progress" style="width: ${[38,45,52][i%3]}%"></div></div></div>`).join('')}</div>`;
 
-    const html = `
-        <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
-            <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
-                <div class="flex-1">
-                    <h3 class="text-xl font-bold text-gray-800">✨ ${escapeHtml(nickname) || 'นักเดินทาง'} <span class="text-indigo-400"> รหัสชีวิต ${lifePath}/${destiny}</span></h3>
+        const html = `
+            <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card p-5 md:p-6">
+                <div  class="absolute top-4 right-4 w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg flex items-center justify-center transition-all duration-200 z-20" >
+                    <button id="editFormBtn" class="btn-primary text-white hover:text-indigo-800 font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-regular fa-pen-to-square text-3xl"></i>
+                    </button>
                 </div>
-                <div id="playButtonAnchor" class="flex-shrink-0"></div>
+
+                <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-gray-800">✨ ${escapeHtml(nickname) || 'นักเดินทาง'} <span class="text-indigo-400"> รหัสชีวิต ${lifePath}/${destiny}</span></h3>
+                    </div>
                 
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-star text-amber-500"></i> จุดแข็งทางธรรมชาติ</p>
-                    <ul class="space-y-1">${strengthsList}</ul>
                 </div>
-                <div>
-                    <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-flag-checkered text-emerald-500"></i> ทักษะพัฒนา 90 วันแรก</p>
-                    <ul class="space-y-1">${skillsList}</ul>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-star text-amber-500"></i> จุดแข็งทางธรรมชาติ</p>
+                        <ul class="space-y-1">${strengthsList}</ul>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-2 text-gray-700"><i class="fa-regular fa-flag-checkered text-emerald-500"></i> ทักษะพัฒนา 90 วันแรก</p>
+                        <ul class="space-y-1">${skillsList}</ul>
+                    </div>
                 </div>
+                ${progressHtml}
             </div>
-            ${progressHtml}
-            <div class="mt-6 text-center">
-                <button id="editFormBtn" class="btn-primary text-white hover:text-indigo-800 font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
-                    <i class="fa-regular fa-pen-to-square"></i> แก้ไขข้อมูล
-                </button>
-            </div>
-        </div>
-    `;
+        `;
 
-    container.innerHTML = html;
-    container.classList.remove('hidden');
+        container.innerHTML = html;
+        container.classList.remove('hidden');
 
-    // จัดการปุ่มแก้ไขข้อมูล
-    const editBtn = document.getElementById('editFormBtn');
-    if (editBtn) {
-        editBtn.addEventListener('click', () => {
-            const formModal = document.getElementById('formModal');
-            const resultContainer = document.getElementById('resultContainer');
+        // จัดการปุ่มแก้ไขข้อมูล
+        const editBtn = document.getElementById('editFormBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                const formModal = document.getElementById('formModal');
+                const resultContainer = document.getElementById('resultContainer');
             
-            if (formModal && resultContainer) {
-                formModal.classList.remove('hidden');   // แสดงฟอร์ม
-                formModal.style.display = 'flex';
-            }
-        });
+                if (formModal && resultContainer) {
+                    formModal.classList.remove('hidden');   // แสดงฟอร์ม
+                    formModal.style.display = 'flex';
+                    formModal.scrollIntoView ({behavior: 'smooth' , block : 'start'});
+                }
+            });
+        }
     }
-}
  
 
     // ฟังก์ชันเล่นเพลงตาม lifePath (ใช้กับ global button)
