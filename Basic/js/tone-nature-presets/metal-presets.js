@@ -1,11 +1,11 @@
-// metal-presets.js
 window.metalPresets = {
     lofi: {
         tempo: 70,
         instruments: ['vibes', 'celesta', 'kalimba'],
         effects: ['reverb', 'delay'],
         natureEffects: [
-            { type: 'metal_wind_chimes', element: 'metal', intensity: 0.6, toneParams: {} }
+            { type: 'metal_wind_chimes', element: 'metal', intensity: 0.3, toneParams: {} },
+            { type: 'birds', element: 'metal', intensity: 1, toneParams: {} }     // เพิ่ม birds
         ],
         mood: 'calm',
         intensity: 'low'
@@ -15,7 +15,8 @@ window.metalPresets = {
         instruments: ['chimes', 'vibes', 'strings'],
         effects: ['reverb', 'chorus'],
         natureEffects: [
-            { type: 'metal_bell', element: 'metal', intensity: 0.5, toneParams: {} }
+            { type: 'metal_bell', element: 'metal', intensity: 0.3, toneParams: {} },
+            { type: 'cricket', element: 'metal', intensity: 1, toneParams: {} }   // เพิ่ม cricket
         ],
         mood: 'serene',
         intensity: 'low'
@@ -25,7 +26,8 @@ window.metalPresets = {
         instruments: ['bell', 'piano', 'strings'],
         effects: ['reverb', 'eq'],
         natureEffects: [
-            { type: 'metal_bell', element: 'metal', intensity: 0.4, toneParams: {} }
+            { type: 'metal_bell', element: 'metal', intensity: 0.3, toneParams: {} },
+            { type: 'cricket', element: 'metal', intensity: 1, toneParams: {} }   // เพิ่ม cricket
         ],
         mood: 'focused',
         intensity: 'medium'
@@ -35,7 +37,8 @@ window.metalPresets = {
         instruments: ['harp', 'flute', 'chimes'],
         effects: ['reverb', 'filter'],
         natureEffects: [
-            { type: 'metal_vibrations', element: 'metal', intensity: 0.3, toneParams: {} }
+            { type: 'metal_vibrations', element: 'metal', intensity: 0.3, toneParams: {} },
+            { type: 'lamb', element: 'metal', intensity: 1, toneParams: {} }      // เพิ่ม lamb
         ],
         mood: 'peaceful',
         intensity: 'low'

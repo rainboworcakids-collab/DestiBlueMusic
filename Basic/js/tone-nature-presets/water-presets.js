@@ -4,7 +4,8 @@ window.waterPresets = {
         instruments: ['vibes', 'celesta', 'acousticGuitar'],
         effects: ['reverb', 'delay'],
         natureEffects: [
-            { type: 'rain', element: 'water', intensity: 0.6, toneParams: {} }
+            { type: 'rain', element: 'water', intensity: 0.3, toneParams: {} },
+            { type: 'frogs', element: 'water', intensity: 1, toneParams: {} }      // เพิ่ม frog
         ],
         mood: 'calm',
         intensity: 'low'
@@ -14,7 +15,8 @@ window.waterPresets = {
         instruments: ['flute', 'strings', 'pad'],
         effects: ['reverb', 'chorus'],
         natureEffects: [
-            { type: 'water_stream', element: 'water', intensity: 0.5, toneParams: {} }
+            { type: 'water_stream', element: 'water', intensity: 0.3, toneParams: {} },
+            { type: 'birds', element: 'water', intensity: 1, toneParams: {} }     // เพิ่ม birds
         ],
         mood: 'flowing',
         intensity: 'low'
@@ -24,7 +26,8 @@ window.waterPresets = {
         instruments: ['piano', 'bell', 'strings'],
         effects: ['reverb', 'eq'],
         natureEffects: [
-            { type: 'water_drip', element: 'water', intensity: 0.6, toneParams: {} }
+            { type: 'water_drip', element: 'water', intensity: 0.3, toneParams: {} },
+            { type: 'cricket', element: 'water', intensity: 1, toneParams: {} }   // เพิ่ม cricket
         ],
         mood: 'focused',
         intensity: 'medium'
@@ -34,7 +37,8 @@ window.waterPresets = {
         instruments: ['harp', 'chimes', 'flute'],
         effects: ['reverb', 'filter'],
         natureEffects: [
-            { type: 'water_ocean', element: 'water', intensity: 0.5, toneParams: {} }
+            { type: 'water_ocean', element: 'water', intensity: 0.3, toneParams: {} },
+            { type: 'lamb', element: 'water', intensity: 1, toneParams: {} }      // เพิ่ม lamb
         ],
         mood: 'peaceful',
         intensity: 'low'

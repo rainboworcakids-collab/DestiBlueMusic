@@ -4,7 +4,8 @@ window.earthPresets = {
         instruments: ['acousticGuitar', 'kalimba', 'celesta'],
         effects: ['reverb', 'delay'],
         natureEffects: [
-            { type: 'wind', element: 'earth', intensity: 0.7, toneParams: {} }
+            { type: 'wind', element: 'earth', intensity: 0.3, toneParams: {} },
+            { type: 'cricket', element: 'earth', intensity: 1, toneParams: {} }   // เพิ่ม cricket
         ],
         mood: 'grounded',
         intensity: 'medium'
@@ -14,7 +15,8 @@ window.earthPresets = {
         instruments: ['vibes', 'celesta', 'flute'],
         effects: ['reverb', 'chorus'],
         natureEffects: [
-            { type: 'rain', element: 'earth', intensity: 0.5, toneParams: {} }
+            { type: 'rain', element: 'earth', intensity: 0.3, toneParams: {} },
+            { type: 'frogs', element: 'earth', intensity: 1, toneParams: {} }      // เพิ่ม frog
         ],
         mood: 'calm',
         intensity: 'low'
@@ -24,7 +26,8 @@ window.earthPresets = {
         instruments: ['piano', 'strings', 'bell'],
         effects: ['reverb', 'eq'],
         natureEffects: [
-            { type: 'stream', element: 'earth', intensity: 0.4, toneParams: {} }
+            { type: 'stream', element: 'earth', intensity: 0.3, toneParams: {} },
+            { type: 'chicken', element: 'earth', intensity: 1, toneParams: {} }   // เพิ่ม chicken
         ],
         mood: 'focused',
         intensity: 'medium'
@@ -34,7 +37,8 @@ window.earthPresets = {
         instruments: ['flute', 'harp', 'chimes'],
         effects: ['reverb', 'filter'],
         natureEffects: [
-            { type: 'birds', element: 'earth', intensity: 0.3, toneParams: {} }
+            { type: 'stream', element: 'earth', intensity: 0.3, toneParams: {} },
+            { type: 'lamb', element: 'earth', intensity: 1, toneParams: {} }      // เพิ่ม lamb
         ],
         mood: 'peaceful',
         intensity: 'low'
