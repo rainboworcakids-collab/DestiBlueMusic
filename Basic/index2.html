@@ -201,7 +201,7 @@
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-spinner"></div>
-        <h2 class="text-xl text-white mb-2">DestiBlue Music</h2>
+        <h2 class="text-xl text-white mb-2">MLQ-Music</h2>
         <p class="text-slate-400">Loading application...</p>
         <div id="loadingProgress" class="mt-4 text-sm text-slate-500"></div>
     </div>
@@ -282,7 +282,7 @@
                 </div>
                     
                 <!-- บัตรประชาชน -->
-                <div id="idCardContainer" class="form-group" data-options="IDC,BD-IDC-FullName">
+                <div id="idCardContainer" class="form-group hidden" data-options="IDC,BD-IDC-FullName">
                     <label for="id_card" class="form-label">
                         <i class="fas fa-id-card mr-1"></i> บัตรประชาชน
                     </label>
@@ -464,11 +464,6 @@
 
         const html = `
             <div class="bg-white rounded-2xl shadow-lg border border-indigo-100 result-card mt-1 p-5 md:p-6">
-                <div  class="absolute top-4 right-4 w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg flex items-center justify-center transition-all duration-200 z-20" >
-                    <button id="editFormBtn" class="btn-primary text-white hover:text-indigo-800 font-semibold bt-5 px-6 py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-lg">
-                        <i class="fa-regular fa-pen-to-square text-3xl"></i>
-                    </button>
-                </div>
 
                 <div class="flex justify-between items-start gap-4 mb-4 flex-wrap">
                     <div class="flex-1">
@@ -493,30 +488,6 @@
         container.innerHTML = html;
         container.classList.remove('hidden');
         
-        // จัดการปุ่มแก้ไขข้อมูล
-        const editBtn = document.getElementById('editFormBtn');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => {
-                stopAllMusic();
-        
-                const formModal = document.getElementById('formModal');
-                const resultContainer = document.getElementById('resultContainer');
-                const playBtnDiv = document.getElementById('playBttn'); // เพิ่มบรรทัดนี้
-
-                if (formModal && resultContainer) {
-                    formModal.classList.remove('hidden');
-                    formModal.style.display = 'block'; // หรือ flex ตามที่คุณตั้งไว้
-            
-                    // --- เพิ่มส่วนนี้เพื่อซ่อนปุ่ม Play ไม่ให้ทับ Form ---
-                    if (playBtnDiv) {
-                        playBtnDiv.style.display = 'none'; 
-                    }
-
-                    formModal.scrollIntoView({behavior: 'smooth', block: 'start'});
-                }
-            });
-        }
-
         // เปลี่ยนจากการสั่ง block หรือ inline-flex เป็นแบบนี้เพื่อความแน่นอน
         const playBtnDiv = document.getElementById('playBttn');
         if (playBtnDiv) {
@@ -589,11 +560,7 @@
         let lp = localStorage.getItem('mlq_last_lifepath');
         if (lp) {
             playMusicByLifePath(parseInt(lp));
-        } else {
-            // fallback
-            playMusicByLifePath(6);
-            console.warn('No saved lifePath, playing default 6');
-        }
+        } 
     });
     
     
@@ -617,6 +584,25 @@
         if (window.AudioController && typeof window.AudioController.stopMusic === 'function') {
             window.AudioController.stopMusic();
         }
+        
+        
+        // ถ้าหยุดเพลงจะ เลื่อ่นไปหา form 
+        const formModal = document.getElementById('formModal');
+        const resultContainer = document.getElementById('resultContainer');
+        const playBtnDiv = document.getElementById('playBttn'); 
+
+        if (formModal) {
+            formModal.classList.remove('hidden');
+            formModal.style.display = 'block'; // หรือ flex ตามที่คุณตั้งไว้
+            
+            // --- เพิ่มส่วนนี้เพื่อซ่อนปุ่ม Play ไม่ให้ทับ Form ---
+            if (playBtnDiv) {
+                playBtnDiv.style.display = 'none'; 
+            }
+
+            formModal.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        
     }
     
     // Auto-format วันเกิด (DD/MM/YYYY)
@@ -707,5 +693,29 @@
         })();
     </script>
     
+    
+    <script>
+        window.addEventListener('music-stopped-event', () => {
+            console.log("Index2: Music stopped, restoring form...");
+
+            const formModal = document.getElementById('formModal');
+            const resultContainer = document.getElementById('resultContainer');
+            const playBtnDiv = document.getElementById('playBttn'); 
+
+            if (formModal && resultContainer) {
+                formModal.classList.remove('hidden');
+                formModal.style.display = 'block'; // หรือ flex ตามที่คุณตั้งไว้
+            
+                // --- เพิ่มส่วนนี้เพื่อซ่อนปุ่ม Play ไม่ให้ทับ Form ---
+                if (playBtnDiv) {
+                    playBtnDiv.style.display = 'none'; 
+                    resultContainer.classList.add('hidden');
+                }
+
+                formModal.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+        });
+    </script>
+
 </body>
 </html>
