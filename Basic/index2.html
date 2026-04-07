@@ -497,6 +497,8 @@
         const editBtn = document.getElementById('editFormBtn');
         if (editBtn) {
             editBtn.addEventListener('click', () => {
+                stopAllMusic();
+        
                 const formModal = document.getElementById('formModal');
                 const resultContainer = document.getElementById('resultContainer');
                 const playBtnDiv = document.getElementById('playBttn'); // เพิ่มบรรทัดนี้
@@ -525,6 +527,8 @@
   
     // ฟังก์ชันเล่นเพลงตาม lifePath (ใช้กับ global button)
     function playMusicByLifePath(lp) {
+        stopAllMusic();
+        
         const audio = document.getElementById('previewAudio');
         if (audio) {
             audio.src = getMusicPreviewUrl(lp);
@@ -535,6 +539,8 @@
     // จัดการ form submit
     document.getElementById('musicForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        
+        stopAllMusic();
         
         const fullName = document.getElementById('fullName').value.trim();
         if (!fullName) {
@@ -568,10 +574,6 @@
         // แสดงผลลัพธ์
         displayResult(fullName, destiny, lifePath);
         
-        // เลื่อนไปที่ผลลัพธ์
-        // document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        
-
         // แสดงปุ่ม playButton และอัปเดตเพลงตาม lifePath ปัจจุบัน
         const playBtn = document.getElementById('playBttn');
         if (playBtn) {
@@ -593,6 +595,29 @@
             console.warn('No saved lifePath, playing default 6');
         }
     });
+    
+    
+    // ========== หยุดเพลงทั้งหมด (Tone.js + Audio Element) ==========
+    function stopAllMusic() {
+        // หยุด Tone.js Transport (ถ้ากำลังเล่น)
+        if (window.Tone && Tone.Transport && Tone.Transport.state === 'started') {
+            Tone.Transport.stop();
+            console.log("🛑 Stopped Tone.js Transport");
+        }
+        // หยุด Audio elements ทั้งหมด (เช่น previewAudio)
+        const audioElements = document.querySelectorAll('audio');
+        audioElements.forEach(audio => {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+                console.log("🛑 Stopped audio element:", audio.id || 'unnamed');
+            }
+        });
+        // ถ้ามี AudioController module ให้เรียกใช้ด้วย
+        if (window.AudioController && typeof window.AudioController.stopMusic === 'function') {
+            window.AudioController.stopMusic();
+        }
+    }
     
     // Auto-format วันเกิด (DD/MM/YYYY)
     const birthDateInput = document.getElementById('birthDate');
