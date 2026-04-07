@@ -1491,6 +1491,10 @@ class MusicAudio {
                 EventBus.emit('playbackPaused', { position: this.transportPosition });
                 EventBus.emit('playbackStateChanged', { isPlaying: false });
             }
+            
+            // กระจาย Event ออกไป (ส่งสัญญาณ)
+            window.dispatchEvent(new CustomEvent('music-stopped-event')); 
+
             this.log('Playback paused');
         } catch (err) {
             this.handleError('Failed to pause playback', err);
@@ -1531,7 +1535,12 @@ class MusicAudio {
                 EventBus.emit('playbackStopped');
                 EventBus.emit('playbackStateChanged', { isPlaying: false });
             }
+            
+            // กระจาย Event ออกไป (ส่งสัญญาณ)
+            window.dispatchEvent(new CustomEvent('music-stopped-event')); 
+
             this.log('Playback stopped');
+            
         } catch (err) {
             this.handleError('Failed to stop playback', err);
         }
