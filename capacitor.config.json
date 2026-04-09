@@ -1,0 +1,15 @@
+
+{
+  "appId": "com.destiblue.app",
+  "appName": "MLQ-Music",
+  "webDir": "www",
+  "server": {
+    "allowNavigation": [
+      "*.supabase.co"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true
+  }
+}
