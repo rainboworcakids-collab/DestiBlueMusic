@@ -1,26 +1,33 @@
 {
-  "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/cli": "^8.3.0",
-    "@capacitor/core": "^8.3.0"
-  },
   "name": "mlq-music",
   "version": "1.0.0",
   "description": "MLQ-Music : Your Mission Life Quest Blueprint Music",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android",
+    "cap:add": "npx cap add android"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rainboworcakids-collab/MLQ-Music.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "numerology",
+    "music-generator",
+    "mlq"
+  ],
+  "author": "Apichiat",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/rainboworcakids-collab/MLQ-Music/issues"
   },
-  "homepage": "https://github.com/rainboworcakids-collab/MLQ-Music#readme"
+  "homepage": "https://github.com/rainboworcakids-collab/MLQ-Music#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0"
+  }
 }
