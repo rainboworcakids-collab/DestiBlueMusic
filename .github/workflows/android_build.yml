@@ -22,10 +22,10 @@ jobs:
           java-version: '17'
 
       # 3. ติดตั้ง Node.js
-      - name: Setup Node.js 18
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22'
           cache: 'npm'            # cache เพื่อให้ build ครั้งต่อไปเร็วขึ้น
 
       # 4. ติดตั้ง dependencies (Capacitor)
