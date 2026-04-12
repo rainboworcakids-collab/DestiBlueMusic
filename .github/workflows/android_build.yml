@@ -15,11 +15,12 @@ jobs:
         uses: actions/checkout@v4
 
       # 2. ติดตั้ง Java (จำเป็นสำหรับ Gradle/Android)
-      - name: Setup Java 17
+      - name: set up jdk
         uses: actions/setup-java@v4
         with:
+          java-version: '21'  
           distribution: 'temurin'
-          java-version: '17'
+          cache: gradle
 
       # 3. ติดตั้ง Node.js
       - name: Setup Node.js 22
