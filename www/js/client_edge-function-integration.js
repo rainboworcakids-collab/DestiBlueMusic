@@ -1,10 +1,16 @@
-// 📁 /js/client_edge-function-integration.js (v3.7 - เพิ่ม validation element ใน generateMusicDNA)
+// 📁 /js/client_edge-function-integration.js (v3.8 - Fix APK/WebView: lazy URL resolution + SUPABASE_URL wait)
 // Edge Functions Integration สำหรับ Psychomatrix Music Basic Edition
 // 🛡️ ควบคุมการเรียก Edge Functions ทั้ง 3 ตัว ผ่าน Proxy บน Supabase
 // กฎ: ห้ามสร้าง Mock Data, ต้อง validate ทุก Input/Output ผ่าน DataContract,
 //      ใช้เฉพาะฟังก์ชันที่ได้รับอนุมัติ, ไม่มี Cross-Module Fallback
+//
+// v3.8 แก้ไข:
+//   - constructor ไม่เรียก getBaseURL() ทันทีอีกต่อไป (ป้องกัน APK/WebView race condition)
+//   - URLs เปลี่ยนเป็น lazy getter property (คำนวณตอนใช้งาน ไม่ใช่ตอน construct)
+//   - getBaseURL() เพิ่ม waitForSupabaseURL() รอ window.SUPABASE_URL สูงสุด 5 วินาที
+//   - callEdgeFunction() รอ URL พร้อมก่อน fetch ทุกครั้ง
 
-window.EdgeIntegration_VERSION = 3.7;
+window.EdgeIntegration_VERSION = 3.8;
 
 console.log("[EdgeIntegration] 🔧 client_edge-function-integration v" + window.EdgeIntegration_VERSION + " - INITIALIZING...");
 
@@ -35,11 +41,11 @@ function verifyFunctionApproval(functionName) {
 class EdgeFunctionIntegration {
   constructor() {
     verifyFunctionApproval('constructor');
-    
-    this.baseURL = this.getBaseURL();
-    this.psychomatrixURL = `${this.baseURL}/psychomatrix-calculate`;
-    this.luckyNumberURL = `${this.baseURL}/lucky-number-calculate`;
-    this.musicGeneratorURL = `${this.baseURL}/music-generator-MusicDNA`;
+
+    // ✅ v3.8: ไม่เรียก getBaseURL() ใน constructor อีกต่อไป
+    // URLs จะถูกสร้างแบบ lazy ตอนใช้งานจริง เพื่อป้องกัน APK/WebView race condition
+    // ที่ window.SUPABASE_URL ยังไม่พร้อมตอน constructor ทำงาน
+    this._baseURL = null; // lazy — set ครั้งแรกใน getBaseURL()
     
     this.retryConfig = {
       maxRetries: 3,
@@ -51,19 +57,71 @@ class EdgeFunctionIntegration {
     this.cache = new Map();
     this.timeout = 30000;
     
-    console.log("[EdgeIntegration] ✅ v" + window.EdgeIntegration_VERSION + " initialized (Proxy)");
+    console.log("[EdgeIntegration] ✅ v" + window.EdgeIntegration_VERSION + " initialized (Proxy, lazy URL)");
+  }
+
+  // ✅ v3.8: lazy getters — URL สร้างตอนเรียกใช้งานจริง
+  get psychomatrixURL() { return `${this.getBaseURL()}/psychomatrix-calculate`; }
+  get luckyNumberURL()  { return `${this.getBaseURL()}/lucky-number-calculate`; }
+  get musicGeneratorURL() { return `${this.getBaseURL()}/music-generator-MusicDNA`; }
+
+  // ✅ v3.8: waitForSupabaseURL — รอ window.SUPABASE_URL สูงสุด 5 วินาที
+  // แก้ปัญหา APK/WebView ที่ supabase-config.js อาจโหลดช้ากว่า edge-function-integration.js
+  _waitForSupabaseURL(maxWaitMs = 5000, intervalMs = 100) {
+    if (window.SUPABASE_URL) return Promise.resolve(window.SUPABASE_URL);
+    return new Promise((resolve, reject) => {
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.SUPABASE_URL) {
+          clearInterval(timer);
+          console.log('[EdgeIntegration] ✅ SUPABASE_URL ready after ' + (Date.now() - start) + 'ms');
+          resolve(window.SUPABASE_URL);
+        } else if (Date.now() - start >= maxWaitMs) {
+          clearInterval(timer);
+          reject(new Error(
+            '[EdgeIntegration] SUPABASE_URL ไม่พร้อมภายใน ' + maxWaitMs + 'ms ' +
+            '— ตรวจสอบว่า supabase-config.js โหลดก่อน client_edge-function-integration.js ' +
+            'และ window.SUPABASE_URL ถูกกำหนดค่าไว้ถูกต้อง'
+          ));
+        }
+      }, intervalMs);
+    });
   }
 
   getBaseURL() {
     verifyFunctionApproval('getBaseURL');
-    if (!window.SUPABASE_URL) {
-      throw new Error('[EdgeIntegration] SUPABASE_URL is not defined. Make sure supabase-config.js is loaded.');
+    // ✅ v3.8: ใช้ cached URL ถ้ามีแล้ว
+    if (this._baseURL) return this._baseURL;
+    // ถ้า SUPABASE_URL พร้อมแล้ว ใช้เลย
+    if (window.SUPABASE_URL) {
+      this._baseURL = `${window.SUPABASE_URL}/functions/v1/edge-function-integration`;
+      console.log('[EdgeIntegration] baseURL:', this._baseURL);
+      return this._baseURL;
     }
-    return `${window.SUPABASE_URL}/functions/v1/edge-function-integration`;
+    // ยังไม่พร้อม — throw ให้ callEdgeFunction() จัดการด้วย _waitForSupabaseURL()
+    throw new Error('[EdgeIntegration] SUPABASE_URL is not defined yet. Use callEdgeFunction() which waits automatically.');
   }
 
   async callEdgeFunction(url, data, functionName) {
     verifyFunctionApproval('callEdgeFunction');
+
+    // ✅ v3.8: รอ SUPABASE_URL ก่อนทุกครั้ง ป้องกัน APK race condition
+    // ถ้า url ยังไม่มี SUPABASE_URL (เช่น lazy getter throw แล้ว url เป็น undefined)
+    // ให้ resolve URL ใหม่หลังจาก _waitForSupabaseURL() สำเร็จ
+    let resolvedUrl = url;
+    if (!resolvedUrl || resolvedUrl.includes('undefined')) {
+      console.warn(`[EdgeIntegration] ⏳ URL ยังไม่พร้อม (${resolvedUrl}) — รอ SUPABASE_URL...`);
+      await this._waitForSupabaseURL();
+      // สร้าง URL ใหม่หลัง SUPABASE_URL พร้อม
+      const base = `${window.SUPABASE_URL}/functions/v1/edge-function-integration`;
+      this._baseURL = base;
+      if (functionName === 'psychomatrix-calculate') resolvedUrl = `${base}/psychomatrix-calculate`;
+      else if (functionName === 'lucky-number-calculate') resolvedUrl = `${base}/lucky-number-calculate`;
+      else if (functionName === 'music-generator-MusicDNA') resolvedUrl = `${base}/music-generator-MusicDNA`;
+      else throw new Error(`[EdgeIntegration] Unknown functionName for URL resolution: ${functionName}`);
+      console.log(`[EdgeIntegration] ✅ URL resolved → ${resolvedUrl}`);
+    }
+
     console.log(`[EdgeIntegration] 📡 Calling ${functionName} via proxy`);
 
     try {
@@ -97,7 +155,8 @@ class EdgeFunctionIntegration {
           'apikey': window.SUPABASE_ANON_KEY || ''
         };
 
-        const response = await fetch(url, {
+        // ✅ v3.8: ใช้ resolvedUrl (ไม่ใช่ url เดิม ที่อาจมี undefined)
+        const response = await fetch(resolvedUrl, {
           method: 'POST',
           headers: headers,
           body: JSON.stringify(data),
@@ -284,6 +343,14 @@ class EdgeFunctionIntegration {
     console.log('[EdgeIntegration] 🔮 Starting Numerology calculation');
     
     try {
+      // ✅ v3.8: รอ SUPABASE_URL ให้พร้อมก่อนสร้าง URLs
+      await this._waitForSupabaseURL();
+      // อัปเดต _baseURL cache หลังรอสำเร็จ
+      if (!this._baseURL) {
+        this._baseURL = `${window.SUPABASE_URL}/functions/v1/edge-function-integration`;
+        console.log('[EdgeIntegration] 📌 baseURL set:', this._baseURL);
+      }
+
       const preparedData = this.prepareDataForEdgeFunctions(formData);
       
       const [psychomatrixResult, luckyNumberResult] = await Promise.all([
@@ -506,5 +573,5 @@ function createEdgeFunctionIntegration() {
 
 if (typeof window !== 'undefined') {
   window.EdgeFunctionIntegration = createEdgeFunctionIntegration();
-  console.log('[EdgeIntegration] ✅ client_edge-function-integration  v" + window.EdgeIntegration_VERSION + " loaded');
+  console.log('[EdgeIntegration] ✅ client_edge-function-integration v3.8 loaded (lazy URL, APK-safe)');
 }
