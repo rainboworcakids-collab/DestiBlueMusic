@@ -1,12 +1,12 @@
-// app-main.js v7.9 - Fixed: setState music.current pointer string only, combinedDNA dispatch only in initialize
+// app-main.js v8.0 - Added Premium state management (isolated from user)
 // แก้ไข:
-//   - generateMusicDNA ตั้งค่า music.current เป็น string pointer ("music.default" หรือ "music.CustomSty")
-//   - setState('music.current') dispatch event เฉพาะ activeDNA ตาม pointer
-//   - initialize() dispatch combinedDNA เมื่อมีทั้ง default และ custom DNA
-//   - ตรวจสอบค่าเดิมก่อน setState เพื่อป้องกัน event ฟุ่มเฟือย
-//   - helper methods _getValueAtPath, _deepEqual
+//   - เพิ่ม state.premium สำหรับตรวจสอบสถานะ Premium โดยเฉพาะ
+//   - checkUserPremiumStatus() รองรับ Capacitor + localStorage + Supabase
+//   - updatePremiumState() ใช้ key แยก "premium_status"
+//   - initialize() เรียกเช็ค Premium หลัง loadPersistedData()
+//   - ไม่กระทบ music, numerology, form หรือ event dispatch เดิม
 
-window.AppMain_VERSION = "7.9";
+window.AppMain_VERSION = "8.0";
 
 console.log("🔧 APP-MAIN.JS v" + window.AppMain_VERSION + " - STATE MANAGER CENTRAL INITIALIZING...");
 
@@ -45,6 +45,9 @@ const APPROVED_FUNCTIONS_AppMain = {
     handleLuckyNumberDataReceived: true,
     setupEventListeners: true,
     resetToDefaultMusic: true,
+    // ✅ Premium methods (v8.0)
+    checkUserPremiumStatus: true,
+    updatePremiumState: true,
     // ✅ internal helpers
     _getValueAtPath: true,
     _deepEqual: true
@@ -77,6 +80,10 @@ class AppMainController {
                 luckyNumber: null,
                 musicGenerator: null
             },
+            premium: {                // ✅ v8.0: premium state แยกจาก user
+                isActive: false,
+                lastChecked: null
+            },
             ui: {
                 formVisible: false,
                 loading: false,
@@ -104,18 +111,89 @@ class AppMainController {
         return JSON.stringify(a) === JSON.stringify(b);
     }
 
+    // ========== 3. PREMIUM LOGIC (v8.0 - ปลอดภัย ไม่กระทบ user) ==========
+    async checkUserPremiumStatus() {
+        verifyFunctionApproval('checkUserPremiumStatus');
+        try {
+            const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+            let isPremium = false;
+
+            // 1. โหลดจาก本地 cache (แยก key)
+            if (isNative && window.Capacitor?.Preferences) {
+                const { value } = await window.Capacitor.Preferences.get({ key: 'premium_status' });
+                isPremium = (value === 'true');
+            } else {
+                const stored = localStorage.getItem('premium_status');
+                isPremium = (stored === 'true');
+            }
+
+            if (isPremium) {
+                this.setState('premium.isActive', true);
+                this.setState('premium.lastChecked', new Date().toISOString());
+                console.log("✅ [AppMain] Premium active (from cache)");
+                return true;
+            }
+
+            // 2. ถ้าไม่มี cache หรือ cache เป็น false → ลองเช็ค Supabase (ถ้ามี client)
+            if (window.supabaseClient && typeof window.supabaseClient.auth?.getSession === 'function') {
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+                const userId = session?.user?.id;
+                if (userId) {
+                    const { data, error } = await window.supabaseClient
+                        .from('profiles')
+                        .select('is_premium')
+                        .eq('id', userId)
+                        .single();
+                    if (!error && data?.is_premium === true) {
+                        await this.updatePremiumState(true);
+                        console.log("✅ [AppMain] Premium active (from Supabase)");
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Default: ไม่เป็น premium
+            await this.updatePremiumState(false);
+            console.log("ℹ️ [AppMain] Premium not active");
+            return false;
+        } catch (e) {
+            console.warn("⚠️ [AppMain] Premium check failed, using default false:", e);
+            await this.updatePremiumState(false);
+            return false;
+        }
+    }
+
+    async updatePremiumState(isPremium) {
+        verifyFunctionApproval('updatePremiumState');
+        const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        const valueStr = isPremium ? 'true' : 'false';
+
+        if (isNative && window.Capacitor?.Preferences) {
+            await window.Capacitor.Preferences.set({ key: 'premium_status', value: valueStr });
+        } else {
+            localStorage.setItem('premium_status', valueStr);
+        }
+
+        this.setState('premium.isActive', isPremium);
+        this.setState('premium.lastChecked', new Date().toISOString());
+        console.log(`📢 [AppMain] Premium state updated: ${isPremium}`);
+    }
+
     // ---------- core state methods ----------
-    initialize() {
+    async initialize() {   // ✅ v8.0: เปลี่ยนเป็น async
         verifyFunctionApproval('initialize');
         console.log("🚀 Initializing AppMain v" + window.AppMain_VERSION + "...");
         try {
             this.loadPersistedData();
+            
+            // ✅ v8.0: เช็ค premium หลังจากโหลดข้อมูล
+            await this.checkUserPremiumStatus();
+            
             this.setupEventListeners();
             this.updateUIFromState();
 
             // ✅ [v7.9] หลัง restore state จาก localStorage ครบแล้ว
             // ถ้ามีทั้ง defaultDNA และ customDNA → dispatch musicPointerChanged แบบ combined
-            // เพื่อให้ MusicAudio รู้ว่ามี DNA พร้อมเล่นทั้งสองท่อน
             const defaultDNA = this.state.music.default;
             const customDNA = this.state.music.CustomSty;
             const currentPointer = this.state.music.current || 'music.default';
@@ -146,7 +224,7 @@ class AppMainController {
                 window.AudioController.initialize();
             }
 
-            console.log("✅ AppMain   v"  +  window.AppMain_VERSION + " initialized successfully");
+            console.log("✅ AppMain v" + window.AppMain_VERSION + " initialized successfully");
         } catch (error) {
             console.error("❌ AppMain initialization failed:", error);
             throw error;
@@ -289,6 +367,18 @@ class AppMainController {
                 case 'ui.currentMode':
                     if (typeof value !== 'string') {
                         errors.push('UI view/mode must be string');
+                    }
+                    break;
+                
+                // ✅ v8.0: เพิ่ม validation สำหรับ premium paths
+                case 'premium.isActive':
+                    if (typeof value !== 'boolean') {
+                        errors.push('premium.isActive must be boolean');
+                    }
+                    break;
+                case 'premium.lastChecked':
+                    if (value !== null && typeof value !== 'string') {
+                        errors.push('premium.lastChecked must be ISO string or null');
                     }
                     break;
                     
@@ -836,6 +926,7 @@ class AppMainController {
             'music.default':       'psychomatrixMusicDefault',
             'music.CustomSty':     'psychomatrixMusicCustomStyle',
             'edgeFunctions':       'psychomatrixEdgeFunctions'
+            // premium ไม่ต้อง persist ที่นี่ เพราะใช้ key แยก 'premium_status'
         };
         
         let storageKey = null;
@@ -987,6 +1078,10 @@ class AppMainController {
                 luckyNumber: null,
                 musicGenerator: null
             },
+            premium: {                // ✅ v8.0
+                isActive: false,
+                lastChecked: null
+            },
             ui: {
                 formVisible: false,
                 loading: false,
@@ -1014,6 +1109,7 @@ class AppMainController {
             luckyNumber: null,
             musicGenerator: null
         };
+        // ✅ v8.0: ไม่ reset premium state (คงสถานะเดิม)
         
         const keysToRemove = [
             'psychomatrixUserData',
@@ -1143,7 +1239,8 @@ class AppMainController {
                 luckyNumber: !!this.state.luckyNumber,
                 musicCurrent: !!this.state.music?.current,
                 musicDefault: !!this.state.music?.default,
-                musicCustom: !!this.state.music?.CustomSty
+                musicCustom: !!this.state.music?.CustomSty,
+                premium: this.state.premium   // ✅ v8.0: แสดง premium state
             },
             edgeFunctions: this.state.edgeFunctions,
             ui: this.state.ui,
@@ -1153,7 +1250,8 @@ class AppMainController {
                 numerologyData: !!localStorage.getItem('psychomatrixNumerologyData'),
                 musicCurrent: !!localStorage.getItem('psychomatrixMusicCurrent'),
                 musicDefault: !!localStorage.getItem('psychomatrixMusicDefault'),
-                musicCustom: !!localStorage.getItem('psychomatrixMusicCustomStyle')
+                musicCustom: !!localStorage.getItem('psychomatrixMusicCustomStyle'),
+                premiumStatus: localStorage.getItem('premium_status')   // ✅ v8.0
             }
         };
     }
@@ -1212,7 +1310,11 @@ window.AppMainController = {
     
     formatFormDataForState: (formData) => window.AppMain.formatFormDataForState(formData),
     getStatusReport: () => window.AppMain.getStatusReport(),
-    validateAllData: () => window.AppMain.validateAllData()
+    validateAllData: () => window.AppMain.validateAllData(),
+    
+    // ✅ v8.0: expose premium methods
+    checkUserPremiumStatus: () => window.AppMain.checkUserPremiumStatus(),
+    updatePremiumState: (isPremium) => window.AppMain.updatePremiumState(isPremium)
 };
 
 // ========== 18. AUTO-INITIALIZE ==========
@@ -1222,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         try {
             window.AppMainController.initialize();
-            console.log("🎉 AppMain v" + window.AppMain_VERSION + " ready! (State Manager Central with current/default/CustomSty)");
+            console.log("🎉 AppMain v" + window.AppMain_VERSION + " ready! (State Manager Central with Premium state)");
         } catch (error) {
             console.error("❌ AppMain initialization failed:", error);
             
@@ -1253,4 +1355,4 @@ console.log("✅ APP-MAIN.JS v" + window.AppMain_VERSION + " LOADED");
 console.log("📋 Approved Functions APP-MAIN:", Object.keys(APPROVED_FUNCTIONS_AppMain));
 console.log("🔗 DataContract available:", typeof window.DataContract !== 'undefined');
 console.log("🔗 EdgeFunctionIntegration available:", typeof window.EdgeFunctionIntegration !== 'undefined');
-console.log("🎯 State Manager Central ready");
+console.log("🎯 State Manager Central ready with Premium isolation");
