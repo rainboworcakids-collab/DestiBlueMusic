@@ -57,7 +57,8 @@ jobs:
           cd android
           ./gradlew assembleDebug \
             --no-daemon \
-            --stacktrace
+            --stacktrace \
+            --info
 
       # 9. อัปโหลด APK ให้ Download ได้
       - name: Upload APK artifact
