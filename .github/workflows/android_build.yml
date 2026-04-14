@@ -46,6 +46,7 @@ jobs:
           mkdir -p node_modules/@capacitor/android/capacitor/libs
           mkdir -p node_modules/@capacitor/app/android/libs
           mkdir -p android/app/libs
+          mkdir -p android/capacitor-cordova-android-plugins/src/main/libs
 
       # 7. ตั้งสิทธิ์ให้ gradlew รันได้
       - name: Make gradlew executable
