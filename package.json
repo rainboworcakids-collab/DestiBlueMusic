@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^1.0.0",
+    "@tailwindcss/cli": "^4.2.2",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2"
