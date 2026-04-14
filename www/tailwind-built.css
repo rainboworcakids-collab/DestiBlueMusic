@@ -1907,7 +1907,6 @@
       overflow: hidden;
       display: -webkit-box;
       -webkit-box-orient: vertical;
-      -webkit-line-clamp: 1;
     }
   }
 }
@@ -2792,7 +2791,6 @@ ul, ol {
   background: #334155;
   border-radius: 3px;
   outline: none;
-  -webkit-appearance: none;
 }
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -3397,7 +3395,6 @@ ul, ol {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
   background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
-  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .story-chapter {
