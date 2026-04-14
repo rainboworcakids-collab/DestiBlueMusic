@@ -4,11 +4,18 @@
   "description": "MLQ-Music : Your Mission Life Quest Blueprint Music",
   "main": "index.js",
   "type": "commonjs",
+  "overrides": {
+    "tar": "^6.2.1"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "cap:sync": "npx cap sync",
     "cap:open": "npx cap open android",
-    "cap:add": "npx cap add android"
+    "cap:add": "npx cap add android",
+    "build:css": "npx @tailwindcss/cli -i ./www/input.css -o ./www/tailwind-built.css --minify",
+    "watch:css": "npx @tailwindcss/cli -i ./www/input.css -o ./www/tailwind-built.css --watch",
+    "dev": "npm run watch:css",
+    "build": "npm run build:css && npm run cap:sync"
   },
   "repository": {
     "type": "git",
@@ -33,7 +40,7 @@
     "@capacitor/preferences": "^8.0.1"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
+    "@capacitor/assets": "^1.0.0",
     "autoprefixer": "^10.5.0",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2"
