@@ -1,1 +1,10 @@
+# Ignore Build Outputs
+tailwind-built.css
+
+# Ignore Tailwind CLI Binary (ตัวที่สร้างปัญหา 114 MB)
+tailwindcss-linux-x64
+tailwindcss-macos-x64
+tailwindcss-windows-x64
+
+# Ignore Dependencies
 node_modules/
