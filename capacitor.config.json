@@ -13,6 +13,8 @@
   "android": {
     "allowMixedContent": true,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": true,
+    "minSdkVersion": 23,
+    "targetSdkVersion": 33
   }
 }
