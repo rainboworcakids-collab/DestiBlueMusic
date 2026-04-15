@@ -39,6 +39,22 @@ jobs:
       - name: Capacitor Sync
         run: npx cap sync android
 
+      # --- แทรกตรงนี้: บังคับแก้ Java และ SDK Version ทันทีหลัง Sync ---
+      - name: Force Fix Java and SDK Versions
+        run: |
+          echo "Force changing Java version from 21 to 17 in capacitor.build.gradle..."
+          sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' android/app/capacitor.build.gradle
+          
+          echo "Force changing SDK version from 36 to 34 in variables.gradle..."
+          sed -i 's/compileSdkVersion = 36/compileSdkVersion = 34/g' android/variables.gradle
+          sed -i 's/targetSdkVersion = 36/targetSdkVersion = 34/g' android/variables.gradle
+          
+          # ตรวจสอบว่าเปลี่ยนจริงไหม (ดูใน Log)
+          grep "VERSION" android/app/capacitor.build.gradle
+          grep "SdkVersion" android/variables.gradle
+      # ---------------------------------------------------------
+
+
       # 6. ✅ สร้างโฟลเดอร์ที่ขาดหาย (แก้ Gradle build failed)
       - name: Create missing lib directories
         run: |
