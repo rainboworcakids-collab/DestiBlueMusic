@@ -10,38 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. ดึงโค้ดจาก Repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. ติดตั้ง Java (จำเป็นสำหรับ Gradle/Android)
-      - name: Set up JDK
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'          # ← เปลี่ยนจาก 21 เป็น 17 (Capacitor 8 ใช้ Java 17)
+          java-version: '17'
           distribution: 'temurin'
           cache: gradle
 
-      # 3. ติดตั้ง Node.js
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
-      # 4. ติดตั้ง dependencies (ใช้ install แทน ci เพื่อหลีกเลี่ยง lock file sync error)
       - name: Install dependencies
         run: npm install --legacy-peer-deps --audit=false
-        # ↑ ใช้ --legacy-peer-deps เพื่อแก้ vulnerability conflicts
-        # ↑ ใช้ --audit=false เพื่อไม่ให้ build ล้มเหลวจาก vulnerabilities
 
-
-      # 5. Sync ไฟล์ web ไปยัง android folder
       - name: Capacitor Sync
         run: npx cap sync android
 
+      - name: Fix Java 21 to 17 in Capacitor plugins
+        run: |
+          find node_modules/@capacitor -name "build.gradle" -exec sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' {} \;
 
-      # 6. ✅ สร้างโฟลเดอร์ที่ขาดหาย (แก้ Gradle build failed)
       - name: Create missing lib directories
         run: |
           mkdir -p node_modules/@capacitor/preferences/android/libs
@@ -50,17 +44,12 @@ jobs:
           mkdir -p android/app/libs
           mkdir -p android/capacitor-cordova-android-plugins/src/main/libs
 
-      # 7. ตั้งสิทธิ์ให้ gradlew รันได้
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
       - name: Clean Gradle
-        run: cd android && ./gradlew clean    # ← สั่ง Clean ที่นี่ได้เลย!
+        run: cd android && ./gradlew clean
 
-      - name: Build with Gradle
-        run: cd android && ./gradlew assembleDebug
-
-      # 8. Cache Gradle เพื่อให้ build ครั้งต่อไปเร็วขึ้น
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -70,16 +59,11 @@ jobs:
           key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-
 
-      # 9. Build APK
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug \
-            --no-daemon \
-            --stacktrace \
-            --info
+          ./gradlew assembleDebug --no-daemon --stacktrace --info
 
-      # 10. อัปโหลด APK ให้ Download ได้
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
