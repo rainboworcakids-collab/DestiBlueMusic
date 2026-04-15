@@ -18,7 +18,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'          # ← เปลี่ยนจาก 21 เป็น 17 (Capacitor 8 ใช้ Java 17)
+          java-version: '21'          # ← เปลี่ยนจาก 21 เป็น 17 (Capacitor 8 ใช้ Java 17)
           distribution: 'temurin'
           cache: gradle
 
