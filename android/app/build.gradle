@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.destiblue.app"
-        minSdkVersion 22 // แก้จาก rootProject.ext... เป็น 22
+        minSdkVersion 24 // แก้จาก rootProject.ext... เป็น 22
         targetSdkVersion 34 // แก้จาก rootProject.ext... เป็น 34
         versionCode 1
         versionName "1.0"
