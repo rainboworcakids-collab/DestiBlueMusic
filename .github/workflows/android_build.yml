@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
+      - name: Add Android platform
+        run: npx cap add android
+
       - name: Capacitor Sync
         run: npx cap sync android
 
