@@ -13,13 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -32,37 +25,20 @@ jobs:
       - name: Capacitor Sync
         run: npx cap sync android
 
-      - name: Fix Java 21 to 17 in Capacitor plugins
-        run: |
-          find node_modules/@capacitor -name "build.gradle" -exec sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' {} \;
-
-      - name: Create missing lib directories
-        run: |
-          mkdir -p node_modules/@capacitor/preferences/android/libs
-          mkdir -p node_modules/@capacitor/android/capacitor/libs
-          mkdir -p node_modules/@capacitor/app/android/libs
-          mkdir -p android/app/libs
-          mkdir -p android/capacitor-cordova-android-plugins/src/main/libs
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      - name: Clean Gradle
-        run: cd android && ./gradlew clean
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: gradle-
-
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace --info
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
