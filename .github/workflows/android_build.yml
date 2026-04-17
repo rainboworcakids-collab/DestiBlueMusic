@@ -26,7 +26,6 @@ jobs:
         run: npx capacitor-assets generate --android
 
       - name: Generate Icons
-        run: rm -rf android/app/src/main/res/mipmap-*
         run: npx capacitor-assets generate --android --force
   
       - name: Capacitor Sync
