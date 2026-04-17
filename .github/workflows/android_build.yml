@@ -20,7 +20,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps --audit=false
+        run: npm install --legacy-peer-deps
 
       - name: Capacitor Sync
         run: npx cap sync android
