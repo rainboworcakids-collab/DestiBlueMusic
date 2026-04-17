@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">MLQ-Music</string>
-    <string name="title_activity_main">MLQ-Music</string>
-    <string name="package_name">com.destiblue.app</string>
-    <string name="custom_url_scheme">com.destiblue.app</string>
-</resources>
