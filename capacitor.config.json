@@ -9,12 +9,5 @@
     ],
     "androidScheme": "https",
     "cleartext": true
-  },
-  "android": {
-    "allowMixedContent": true,
-    "captureInput": true,
-    "webContentsDebuggingEnabled": true,
-    "minSdkVersion": 23,
-    "targetSdkVersion": 33
   }
 }
