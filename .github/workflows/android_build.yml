@@ -22,14 +22,11 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Generate Icons
-        run: npx capacitor-assets generate --android
-  
-      - name: Capacitor Sync
-        run: npx cap sync android
-  
       - name: Add Android platform
         run: npx cap add android
+        
+      - name: Generate Icons
+        run: npx capacitor-assets generate --android --force    
 
       - name: Capacitor Sync
         run: npx cap sync android
