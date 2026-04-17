@@ -26,7 +26,7 @@ jobs:
         run: npx cap add android
         
       - name: Generate Icons
-        run: npx capacitor-assets generate --android --force    
+        run: npx capacitor-assets generate --android
 
       - name: Capacitor Sync
         run: npx cap sync android
