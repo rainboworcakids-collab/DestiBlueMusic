@@ -16,7 +16,7 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+ 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&family=Sarabun:wght@300;400;500&display=swap" rel="stylesheet">
     
@@ -29,12 +29,10 @@
     <!-- โหลดไฟล์การตั้งค่าและจัดการสถานะที่มีอยู่ -->
     <script src="config/supabase-config.js"></script>
     
-    <!-- script src="https://cdn.tailwindcss.com"></script -->
-
-    <!-- Main Stylesheet (CSS ที่ปรับปรุงใหม่) -->
-    <link rel="stylesheet" href="tailwind-built.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="sora_system_style.css">
+    <link rel="stylesheet" href="tailwind-built.css">
+
     
     <style>
         body { font-family: 'Sarabun', sans-serif; }
@@ -49,6 +47,24 @@
             margin-top: 0.25rem;
         }
     </style>
+    
+    <style>
+			#prerenderBar {
+    		transition: width 0.4s ease, background 0.3s ease;
+			}
+			#prerenderStatusBox {
+    		transition: opacity 0.3s ease;
+			}
+			/* Pulse animation เมื่อกำลัง render */
+			@keyframes prerenderPulse {
+   				0%, 100% { opacity: 1; }
+    			50%       { opacity: 0.6; }
+			}
+			#prerenderStatusBox.rendering {
+    		animation: prerenderPulse 1.5s infinite;
+			}
+		</style>
+
 </head>
 <body>
 
@@ -118,7 +134,7 @@
                             <p class="text-xs text-gray-400 mt-1">ถ้าไม่แน่ใจ ให้ใช้ 6:30 น.(เช้าวันใหม่)</p>
                         </div>
                     </div>
-
+                    <!--
                     <div class="form-group">
                         <label for="musicStyle" class="form-label">🎵 แนวเพลง Melody1</label>
                         <select id="musicStyle" name="musicStyle" class="form-select">
@@ -134,6 +150,45 @@
                             <option value="relax" selected>🧘 Relax / Meditation</option>
                         </select>
                     </div>
+                    -->
+                    
+                    <!-- Melody1: Base Style + Effect Mix -->
+<div class="form-group">
+    <label for="musicStyleBase1" class="form-label">🎵 แนวเพลง Melody1</label>
+    <div class="flex gap-2">
+        <select id="musicStyleBase1" name="musicStyleBase1" class="form-select flex-1">
+            <option value="lofi" selected>🎵 Lo-fi Beats</option>
+            <option value="chill">🌊 Chill / Ambient</option>
+            <option value="study">📚 Study / Focus</option>
+            <option value="relax">🧘 Relax / Meditation</option>
+        </select>
+        <select id="effectMix1" name="effectMix1" class="form-select flex-1">
+            <option value="full" selected>🔊 Full Effect</option>
+            <option value="no_animal">🐾 No Animal</option>
+            <option value="no_nature">🌿 No Nature</option>
+            <option value="clean">🔇 No Effect</option>
+        </select>
+    </div>
+</div>
+
+<!-- Melody2: Base Style + Effect Mix -->
+<div class="form-group">
+    <label for="musicStyleBase2" class="form-label">🎨 แนวเพลง Melody2</label>
+    <div class="flex gap-2">
+        <select id="musicStyleBase2" name="musicStyleBase2" class="form-select flex-1">
+            <option value="lofi">🎵 Lo-fi Beats</option>
+            <option value="chill">🌊 Chill / Ambient</option>
+            <option value="study">📚 Study / Focus</option>
+            <option value="relax" selected>🧘 Relax / Meditation</option>
+        </select>
+        <select id="effectMix2" name="effectMix2" class="form-select flex-1">
+            <option value="full" selected>🔊 Full Effect</option>
+            <option value="no_animal">🐾 No Animal</option>
+            <option value="no_nature">🌿 No Nature</option>
+            <option value="clean">🔇 No Effect</option>
+        </select>
+    </div>
+</div>
                     
                     <button type="submit" id="submitFormBtn" class="btn btn-primary w-full mt-4">
                         <i class="fas fa-save mr-2"></i> บันทึกข้อมูล
@@ -165,11 +220,12 @@
 
     <div class="container">
         <div class="glass-card">
+            
             <div class="flex flex-wrap justify-between items-center gap-4 w-full">
                 <div class="flex items-center gap-3">
-                    <img class="logo-icon" src="icons/icon-72x72.png" alt="MLQ-Music">
+                    <img class="logo-icon" src="icons/icon-512x512.png" alt="MLQ-Music">
                     <div>
-                        <h1 class="app-title">MLQ-Music <span class="edition-badge">Basic Edition</span></h1>
+                        <h1 class="app-title">MLQ-Music <span class="edition-badge">Basic Edition V 1.0</span></h1>
                         <p><span id="currentUserName">-</span> | <span id="currentUserBirth">-</span></p>
                     </div>
                 </div>
@@ -207,10 +263,19 @@
             <div id="InfoPanel" class="info-panel">
                 <div class="storage-status"><i class="fas fa-database mr-1"></i> <span id="storageUserData">❌</span> | <span id="storageMusicPref">❌</span></div>
                 <div id="musicDNADetailedInfo"></div>
+                
+                <div id="prerenderStatusBox" style="margin-top:.75rem;padding:.6rem 1rem;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;font-size:.78rem;min-height:2rem;display:flex;align-items:center;gap:.5rem;">
+    								            <span id="prerenderStatusIcon">🎛️</span>
+    								            <span id="prerenderStatus" style="color:#94a3b8;flex:1;">รอข้อมูลตัวเลข...</span>
+    								            <div style="width:80px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;">
+        									           <div id="prerenderBar" style="height:100%;width:0%;background:linear-gradient(90deg,#10b981,#3b82f6);transition:width .4s ease;"></div>
+    								            </div>
+								            </div>                
             </div>
-            <div id="DestiBlue" class="destiblue-footer">
-                <a href="https://rainboworcakids-collab.github.io/DestiBlue/" target="_blank" rel="noopener">
-                    <img class="DestiBlue_logo" src="icons/DestiBlue_icon-72x72.png" alt="DestiBlue: Destiny BluePrint">
+            
+            <div id="MissionMLQ" class="destiblue-footer">
+                <a href="https://rainboworcakids-collab.github.io/MissionMLQ/" target="_blank" rel="noopener">
+                    <img class="MissionMLQ_logo" src="icons/Mission-MLQ_512x512.png" alt="MissionMLQ: Mission Life Quest BluePrint">
                     Check Your Mission Life Quest BluePrint
                 </a>
             </div>
@@ -235,7 +300,22 @@
     <div id="premiumModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header"><h2 class="modal-title"><i class="fas fa-crown text-yellow-500 mr-2"></i> Premium Edition</h2><button id="closePremiumBtn" class="modal-close">&times;</button></div>
-            <div class="modal-body"><div class="premium-card"><h4 class="font-semibold text-yellow-800 mb-2">เพิ่มบทเพลงพิเศษเฉพาะคุณ</h4><ul class="premium-list"><li><i class="fas fa-check text-green-500 mr-2"></i>เพลงตามเลขนำโชคประจำวันเดือนปี</li><li><i class="fas fa-check text-green-500 mr-2"></i>เพลงวัฏจักรประจำวันเดือนปี</li><li><i class="fas fa-check text-green-500 mr-2"></i>เพลงตามเลขอิทธิผลสิ่งแวดล้อม</li><li><i class="fas fa-check text-green-500 mr-2"></i>ปิดเสียง Nature effect/Animal effect</li><li><i class="fas fa-check text-green-500 mr-2"></i>เปิดแต่เสียง Nature effect/Animal effect</li><li><i class="fas fa-check text-green-500 mr-2"></i>*บทเพลงที่ไม่เพียงช่วยให้จิตใจสงบแต่ยังช่วยนำพาสิ่งที่เป็นมงคลมาสู้ชีวิต</li><li><i class="fas fa-check text-green-500 mr-2"></i>บันทึกเป็นไฟล์เสียงไว้เล่นออฟไลน์ หรือแชร์</li></ul></div></div>
+            <div class="modal-body">
+                <div class="premium-card"><h4 class="font-semibold text-yellow-800 mb-2">เพิ่มบทเพลงพิเศษเฉพาะคุณ</h4>
+                  <ul class="premium-list">
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>เพลงตามเลขนำโชคประจำวันเดือนปี</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>เพลงวัฏจักรประจำวันเดือนปี</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>เพลงตามเลขอิทธิผลสิ่งแวดล้อม</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>เปิด/ปิด เสียง Nature effect/Animal effect</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>มีแนวเพลงให้เลือก 4แนว Lofi/Chill/Study/Relax</li>                           
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>บันทึกเป็นไฟล์เสียงไว้เล่นออฟไลน์ หรือแชร์</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>ตั้งเวลาเล่นกี่นาที่</li>                           
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>เปิด/ปิด บทความสั้น</li>
+                  </ul>
+                  <p>* บทเพลงที่ไม่เพียงช่วยให้จิตใจสงบแต่ยังช่วยนำพาสิ่งที่เป็นมงคลมาสู้ชีวิต</p>
+                    
+                </div>
+            </div>
             <div class="modal-footer"><button id="closePremiumBtn2" class="btn btn-secondary">ปิด</button></div>
         </div>
     </div>
@@ -243,23 +323,24 @@
     <input type="file" id="musicFileInput" accept=".json" class="hidden">
     
     <!-- JavaScript Files -->
+    <!-- script src="js/debug-logger.js"></script -->
     <script src="js/data-contract.js?v=2.1"></script>
-    <script src="js/client_edge-function-integration.js?v=3.7"></script>   
+    <script src="js/client_edge-function-integration.js?v=3.9"></script>   
     <script src="js/app-main.js?v=7.9"></script>
-    <script src="js/form-psychomatrix.js?v=3.6.3"></script>
-    <script src="js/form-ui.js?v=2.9.4"></script>
+    <script src="js/form-psychomatrix.js?v=3.6.4"></script>
+    <script src="js/form-ui.js?v=2.9.7"></script>
     <script src="js/tone-nature-presets/earth-presets.js"></script>
     <script src="js/tone-nature-presets/fire-presets.js"></script>
     <script src="js/tone-nature-presets/metal-presets.js"></script>
     <script src="js/tone-nature-presets/water-presets.js"></script>
     <script src="js/tone-nature-presets/wood-presets.js"></script>
     <script src="js/music-styles.js?v=5.8"></script>
-    <script src="js/NumerologyToMusicConverter.js?v=1.3"></script>
     <script src="js/storytelling-engine.js?v=1.3"></script>
     <script src="js/nature-sounds.js?v=2.0"></script>
-    <script src="js/music-audio.js?v=6.9.6"></script>   
-    <script src="js/music-export.js?v=1.0.0"></script>    
-    <script src="js/ui-display.js?v=3.6.3"></script>
+    <script src="js/music-audio.js?v=6.9.6"></script> 
+    <script src="js/music-prerender.js?v=1.6"></script>
+    <script src="js/music-export.js?v=2.2"></script>    
+    <script src="js/ui-display.js?v=3.6.4"></script>
     <script src="js/pwa-handler.js?v=3.0"></script>
 
     <!-- นาฬิกา JavaScript -->
@@ -575,6 +656,33 @@
 })();
 </script>
 
+
+<script>
+(function(){
+    window.addEventListener('prerenderProgress',function(e){
+        var pct=e.detail&&e.detail.percent, msg=e.detail&&e.detail.message||'';
+        var st=document.getElementById('prerenderStatus'),
+            bar=document.getElementById('prerenderBar'),
+            ic=document.getElementById('prerenderStatusIcon');
+        if(!st) return;
+        if(pct<0){ st.textContent=msg; st.style.color='#ef4444'; if(bar) bar.style.width='0%'; if(ic) ic.textContent='❌'; }
+        else if(pct>=100){ st.textContent=msg; st.style.color='#10b981'; if(bar){ bar.style.width='100%'; bar.style.background='#10b981'; } if(ic) ic.textContent='✅'; }
+        else{ st.textContent=msg; st.style.color='#fbbf24'; if(bar) bar.style.width=pct+'%'; if(ic) ic.textContent='⏳'; }
+    });
+    window.addEventListener('prerenderReset',function(){
+        var st=document.getElementById('prerenderStatus'),bar=document.getElementById('prerenderBar'),ic=document.getElementById('prerenderStatusIcon');
+        if(st){ st.textContent='กำลังรอ DNA ใหม่...'; st.style.color='#94a3b8'; }
+        if(bar){ bar.style.width='0%'; bar.style.background='linear-gradient(90deg,#10b981,#3b82f6)'; }
+        if(ic) ic.textContent='🎛️';
+    });
+    window.addEventListener('prerenderNeedsGesture',function(){
+        var st=document.getElementById('prerenderStatus');
+        if(st){ st.textContent='กดปุ่ม ▶ เพื่อเล่น'; st.style.color='#f59e0b'; }
+    });
+})();
+</script>
+    
+    
     
 </body>
 </html>
